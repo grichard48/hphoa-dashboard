@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex, nofollow" />
+<title>High Point HOA — Reserve & Operating Dashboard</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/prop-types@15/prop-types.min.js"></script>
+<script src="https://unpkg.com/recharts@2.12.0/umd/Recharts.js"></script>
+<style>
+  html, body { margin: 0; padding: 0; background: #EFEDE6; }
+  #root { min-height: 100vh; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const { useState, useMemo } = React;
+const { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine, Legend, Cell } = Recharts;
+const LAST_UPDATED = "July 4, 2026";
+const RESERVE_TREND = [{ "month": "Dec 23", "total": 2659166, "status": "actual" }, { "month": "Jan 24", "total": 2702637, "status": "actual" }, { "month": "Feb 24", "total": 2748513, "status": "actual" }, { "month": "Mar 24", "total": 2748513, "status": "actual" }, { "month": "Apr 24", "total": 2693643, "status": "actual" }, { "month": "May 24", "total": 2693643, "status": "actual" }, { "month": "Jun 24", "total": 2693643, "status": "actual" }, { "month": "Jul 24", "total": 2693643, "status": "actual" }, { "month": "Aug 24", "total": 2693643, "status": "actual" }, { "month": "Sep 24", "total": 2693643, "status": "actual" }, { "month": "Oct 24", "total": 2693643, "status": "actual" }, { "month": "Nov 24", "total": 2693643, "status": "actual" }, { "month": "Jan 25", "total": 3236662, "status": "actual" }, { "month": "Feb 25", "total": 3283583, "status": "actual" }, { "month": "Mar 25", "total": 3336111, "status": "actual" }, { "month": "Apr 25", "total": 3335932, "status": "actual" }, { "month": "May 25", "total": 3378864, "status": "actual" }, { "month": "Jun 25", "total": 3417100, "status": "actual" }, { "month": "Jul 25", "total": 3439852, "status": "actual" }, { "month": "Aug 25", "total": 3454764, "status": "actual" }, { "month": "Sep 25", "total": 3483965, "status": "actual" }, { "month": "Oct 25", "total": 3517165, "status": "actual" }, { "month": "Nov 25", "total": 3570384, "status": "actual" }, { "month": "Dec 25", "total": 3584222, "status": "actual" }, { "month": "Jan 26", "total": 3658232, "status": "actual" }, { "month": "Feb 26", "total": 3736968, "status": "actual" }, { "month": "March 26", "total": 3638615, "status": "actual" }, { "month": "Apr 26", "total": 3598006, "status": "actual" }, { "month": "May 26", "total": 3686103, "status": "actual" }, { "month": "Jun 26", "total": 3752844, "status": "projected" }, { "month": "Jul 26", "total": 3819585, "status": "projected" }, { "month": "Aug 26", "total": 3886326, "status": "projected" }, { "month": "Sep 26", "total": 3953068, "status": "projected" }, { "month": "Oct 26", "total": 4019809, "status": "projected" }, { "month": "Nov 26", "total": 4086550, "status": "projected" }, { "month": "Dec 26", "total": 4153291, "status": "projected" }];
+const OPEX_CATEGORY_YEAR = [{ "year": "2020", "category": "Insurance", "actual": 1554, "budget": 619 }, { "year": "2021", "category": "Insurance", "actual": 1404, "budget": 793 }, { "year": "2022", "category": "Insurance", "actual": 0, "budget": 656 }, { "year": "2023", "category": "Insurance", "actual": 0, "budget": 677 }, { "year": "2024", "category": "Insurance", "actual": 0, "budget": 688 }, { "year": "2025", "category": "Insurance", "actual": 0, "budget": 791 }, { "year": "2020", "category": "Landscape", "actual": 66014, "budget": 77570 }, { "year": "2021", "category": "Landscape", "actual": 57979, "budget": 53859 }, { "year": "2022", "category": "Landscape", "actual": 71983, "budget": 58377 }, { "year": "2023", "category": "Landscape", "actual": 88960, "budget": 65133 }, { "year": "2024", "category": "Landscape", "actual": 89725, "budget": 78481 }, { "year": "2025", "category": "Landscape", "actual": 71024, "budget": 84366 }, { "year": "2020", "category": "Other", "actual": 1349, "budget": 0 }, { "year": "2025", "category": "Other", "actual": 871, "budget": 0 }, { "year": "2020", "category": "Property Tax / SWM", "actual": 1997, "budget": 7741 }, { "year": "2021", "category": "Property Tax / SWM", "actual": 0, "budget": 385 }, { "year": "2022", "category": "Property Tax / SWM", "actual": 0, "budget": 424 }, { "year": "2023", "category": "Property Tax / SWM", "actual": 0, "budget": 424 }, { "year": "2025", "category": "Property Tax / SWM", "actual": 2414, "budget": 1933 }, { "year": "2020", "category": "Repairs & Maintenance", "actual": 70967, "budget": 81519 }, { "year": "2021", "category": "Repairs & Maintenance", "actual": 88139, "budget": 88806 }, { "year": "2022", "category": "Repairs & Maintenance", "actual": 96952, "budget": 104825 }, { "year": "2023", "category": "Repairs & Maintenance", "actual": 114454, "budget": 84222 }, { "year": "2024", "category": "Repairs & Maintenance", "actual": 124452, "budget": 99985 }, { "year": "2025", "category": "Repairs & Maintenance", "actual": 115657, "budget": 107718 }, { "year": "2020", "category": "Reserve Expense", "actual": 115975, "budget": 193830 }, { "year": "2021", "category": "Reserve Expense", "actual": 130185, "budget": 96782 }, { "year": "2022", "category": "Reserve Expense", "actual": 65895, "budget": 158318 }, { "year": "2023", "category": "Reserve Expense", "actual": 91406, "budget": 19014 }, { "year": "2024", "category": "Reserve Expense", "actual": 72738, "budget": 20129 }, { "year": "2025", "category": "Reserve Expense", "actual": 198145, "budget": 55280 }, { "year": "2020", "category": "Reserve Study", "actual": 1850, "budget": 2057 }, { "year": "2021", "category": "Reserve Study", "actual": 3021, "budget": 1702 }, { "year": "2022", "category": "Reserve Study", "actual": 3734, "budget": 2049 }, { "year": "2023", "category": "Reserve Study", "actual": 4165, "budget": 461 }, { "year": "2024", "category": "Reserve Study", "actual": 2347, "budget": 1823 }, { "year": "2025", "category": "Reserve Study", "actual": 14358, "budget": 4044 }, { "year": "2020", "category": "Utilities", "actual": 45314, "budget": 31855 }, { "year": "2021", "category": "Utilities", "actual": 47679, "budget": 41571 }, { "year": "2022", "category": "Utilities", "actual": 42531, "budget": 39368 }, { "year": "2023", "category": "Utilities", "actual": 47352, "budget": 36231 }, { "year": "2024", "category": "Utilities", "actual": 42236, "budget": 46533 }, { "year": "2025", "category": "Utilities", "actual": 57820, "budget": 50974 }];
+const STUDY_COMPARISON = [{ "block": "Block 2-2", "contrib_2025": 15500, "contrib_2026": 25e3, "pct_funded_2025": 63, "pct_funded_2026": 31, "ideal_2026": 284504 }, { "block": "Block 3-1", "contrib_2025": 48e3, "contrib_2026": 7e4, "pct_funded_2025": 46, "pct_funded_2026": 20, "ideal_2026": 626829 }, { "block": "Block 9-1", "contrib_2025": 78e3, "contrib_2026": 12e4, "pct_funded_2025": 78, "pct_funded_2026": 38, "ideal_2026": 1125169 }, { "block": "Block 10-1", "contrib_2025": 3e4, "contrib_2026": 55e3, "pct_funded_2025": 50, "pct_funded_2026": 25, "ideal_2026": 536184 }, { "block": "Block 11-3", "contrib_2025": 22e3, "contrib_2026": 4e4, "pct_funded_2025": 55, "pct_funded_2026": 31, "ideal_2026": 31 }, { "block": "Block 16-2N", "contrib_2025": 6e3, "contrib_2026": 11500, "pct_funded_2025": 90, "pct_funded_2026": 43, "ideal_2026": 105673 }, { "block": "Block 16-2S", "contrib_2025": 6500, "contrib_2026": 11500, "pct_funded_2025": 65, "pct_funded_2026": 22, "ideal_2026": 69583 }, { "block": "Block 16-4", "contrib_2025": 15e3, "contrib_2026": 34617, "pct_funded_2025": 77, "pct_funded_2026": 33, "ideal_2026": 269111 }, { "block": "Block 18-2", "contrib_2025": 15e3, "contrib_2026": 32769, "pct_funded_2025": 71, "pct_funded_2026": 43, "ideal_2026": 266921 }, { "block": "Block 21-4", "contrib_2025": 15250, "contrib_2026": 32928, "pct_funded_2025": 80, "pct_funded_2026": 43, "ideal_2026": 267761 }, { "block": "Block 23-4", "contrib_2025": 15250, "contrib_2026": 32606, "pct_funded_2025": 81, "pct_funded_2026": 45, "ideal_2026": 267761 }, { "block": "Block 24-1", "contrib_2025": 34e3, "contrib_2026": 70802, "pct_funded_2025": 66, "pct_funded_2026": 36, "ideal_2026": 511237 }, { "block": "Block 24-2", "contrib_2025": 4250, "contrib_2026": 10500, "pct_funded_2025": 104, "pct_funded_2026": 44, "ideal_2026": 74939 }, { "block": "Block 24-3", "contrib_2025": 3500, "contrib_2026": 3500, "pct_funded_2025": 111, "pct_funded_2026": 101, "ideal_2026": 24244 }, { "block": "Block 25-1", "contrib_2025": 5200, "contrib_2026": 7500, "pct_funded_2025": 104, "pct_funded_2026": 60, "ideal_2026": 84310 }, { "block": "Block 26-1", "contrib_2025": 7500, "contrib_2026": 12500, "pct_funded_2025": 205, "pct_funded_2026": 102, "ideal_2026": 76497 }, { "block": "Block 26-A", "contrib_2025": 5389, "contrib_2026": 11500, "pct_funded_2025": 100, "pct_funded_2026": 54, "ideal_2026": 125316 }, { "block": "Block 27-1", "contrib_2025": 16e3, "contrib_2026": 2e4, "pct_funded_2025": 120, "pct_funded_2026": 64, "ideal_2026": 113760 }, { "block": "Block 27-2", "contrib_2025": 850, "contrib_2026": 1050, "pct_funded_2025": 152, "pct_funded_2026": 107, "ideal_2026": 5582 }, { "block": "Block 30-1", "contrib_2025": 28e3, "contrib_2026": 56898, "pct_funded_2025": 64, "pct_funded_2026": 36, "ideal_2026": 441953 }, { "block": "Block 30-2", "contrib_2025": 4800, "contrib_2026": 6500, "pct_funded_2025": 96, "pct_funded_2026": 55, "ideal_2026": 51802 }, { "block": "Block 32-1", "contrib_2025": 55e3, "contrib_2026": 107252, "pct_funded_2025": 73, "pct_funded_2026": 40, "ideal_2026": 758291 }, { "block": "Block 32-2", "contrib_2025": 3800, "contrib_2026": 8800, "pct_funded_2025": 84, "pct_funded_2026": 74, "ideal_2026": 29325 }, { "block": "Block 33-1", "contrib_2025": 3800, "contrib_2026": 6500, "pct_funded_2025": 105, "pct_funded_2026": 43, "ideal_2026": 26194 }, { "block": "Block 33-2", "contrib_2025": 1500, "contrib_2026": 1083, "pct_funded_2025": 69, "pct_funded_2026": 33, "ideal_2026": 3600 }, { "block": "Block 34-1", "contrib_2025": 95e3, "contrib_2026": 181603, "pct_funded_2025": 81, "pct_funded_2026": 44, "ideal_2026": 979230 }, { "block": "Block 34-2", "contrib_2025": 3600, "contrib_2026": 7960, "pct_funded_2025": 185, "pct_funded_2026": 59, "ideal_2026": 39636 }];
+const MAINT_LANDSCAPE_BY_BLOCK = [{ "year": "2020", "block": "Block 10 - 1", "category": "Landscape", "actual": 3087.32 }, { "year": "2021", "block": "Block 10 - 1", "category": "Landscape", "actual": 2329.77 }, { "year": "2022", "block": "Block 10 - 1", "category": "Landscape", "actual": 3304.75 }, { "year": "2023", "block": "Block 10 - 1", "category": "Landscape", "actual": 4262.17 }, { "year": "2024", "block": "Block 10 - 1", "category": "Landscape", "actual": 3666.45 }, { "year": "2025", "block": "Block 10 - 1", "category": "Landscape", "actual": 4666.78 }, { "year": "2020", "block": "Block 11 - 3", "category": "Landscape", "actual": 1611.92 }, { "year": "2021", "block": "Block 11 - 3", "category": "Landscape", "actual": 1601.49 }, { "year": "2022", "block": "Block 11 - 3", "category": "Landscape", "actual": 2688.66 }, { "year": "2023", "block": "Block 11 - 3", "category": "Landscape", "actual": 4160.63 }, { "year": "2024", "block": "Block 11 - 3", "category": "Landscape", "actual": 3430.24 }, { "year": "2025", "block": "Block 11 - 3", "category": "Landscape", "actual": 4622.58 }, { "year": "2020", "block": "Block 16 - 2N", "category": "Landscape", "actual": 1833.02 }, { "year": "2021", "block": "Block 16 - 2N", "category": "Landscape", "actual": 1233.64 }, { "year": "2022", "block": "Block 16 - 2N", "category": "Landscape", "actual": 967.98 }, { "year": "2023", "block": "Block 16 - 2N", "category": "Landscape", "actual": 1302.47 }, { "year": "2024", "block": "Block 16 - 2N", "category": "Landscape", "actual": 1422.64 }, { "year": "2025", "block": "Block 16 - 2N", "category": "Landscape", "actual": 200.15 }, { "year": "2020", "block": "Block 16 - 2S", "category": "Landscape", "actual": 1746.78 }, { "year": "2021", "block": "Block 16 - 2S", "category": "Landscape", "actual": 1165.98 }, { "year": "2022", "block": "Block 16 - 2S", "category": "Landscape", "actual": 1472.94 }, { "year": "2023", "block": "Block 16 - 2S", "category": "Landscape", "actual": 1941.28 }, { "year": "2024", "block": "Block 16 - 2S", "category": "Landscape", "actual": 1742.81 }, { "year": "2025", "block": "Block 16 - 2S", "category": "Landscape", "actual": 840.63 }, { "year": "2020", "block": "Block 16 - 4", "category": "Landscape", "actual": 1227.98 }, { "year": "2021", "block": "Block 16 - 4", "category": "Landscape", "actual": 1869.08 }, { "year": "2022", "block": "Block 16 - 4", "category": "Landscape", "actual": 1870.44 }, { "year": "2023", "block": "Block 16 - 4", "category": "Landscape", "actual": 1168.62 }, { "year": "2024", "block": "Block 16 - 4", "category": "Landscape", "actual": 1206 }, { "year": "2025", "block": "Block 16 - 4", "category": "Landscape", "actual": 1113.24 }, { "year": "2020", "block": "Block 18 - 2", "category": "Landscape", "actual": 1404.63 }, { "year": "2021", "block": "Block 18 - 2", "category": "Landscape", "actual": 1135.08 }, { "year": "2022", "block": "Block 18 - 2", "category": "Landscape", "actual": 1135.44 }, { "year": "2023", "block": "Block 18 - 2", "category": "Landscape", "actual": 1168.62 }, { "year": "2024", "block": "Block 18 - 2", "category": "Landscape", "actual": 1206 }, { "year": "2025", "block": "Block 18 - 2", "category": "Landscape", "actual": 1113.24 }, { "year": "2020", "block": "Block 2 - 2", "category": "Landscape", "actual": 1184.8 }, { "year": "2021", "block": "Block 2 - 2", "category": "Landscape", "actual": 3541.23 }, { "year": "2022", "block": "Block 2 - 2", "category": "Landscape", "actual": 3256.22 }, { "year": "2023", "block": "Block 2 - 2", "category": "Landscape", "actual": 4117.92 }, { "year": "2024", "block": "Block 2 - 2", "category": "Landscape", "actual": 2350.44 }, { "year": "2025", "block": "Block 2 - 2", "category": "Landscape", "actual": 2841.88 }, { "year": "2020", "block": "Block 21 - 4", "category": "Landscape", "actual": 1421.05 }, { "year": "2021", "block": "Block 21 - 4", "category": "Landscape", "actual": 1135.08 }, { "year": "2022", "block": "Block 21 - 4", "category": "Landscape", "actual": 1576.44 }, { "year": "2023", "block": "Block 21 - 4", "category": "Landscape", "actual": 1078.63 }, { "year": "2024", "block": "Block 21 - 4", "category": "Landscape", "actual": 1206 }, { "year": "2020", "block": "Block 23 - 4", "category": "Landscape", "actual": 1538.17 }, { "year": "2021", "block": "Block 23 - 4", "category": "Landscape", "actual": 1135.08 }, { "year": "2022", "block": "Block 23 - 4", "category": "Landscape", "actual": 1135.44 }, { "year": "2023", "block": "Block 23 - 4", "category": "Landscape", "actual": 1168.62 }, { "year": "2024", "block": "Block 23 - 4", "category": "Landscape", "actual": 1206 }, { "year": "2025", "block": "Block 23 - 4", "category": "Landscape", "actual": 1113.24 }, { "year": "2020", "block": "Block 24 - 1", "category": "Landscape", "actual": 1261.52 }, { "year": "2021", "block": "Block 24 - 1", "category": "Landscape", "actual": 2445.65 }, { "year": "2022", "block": "Block 24 - 1", "category": "Landscape", "actual": 3154 }, { "year": "2023", "block": "Block 24 - 1", "category": "Landscape", "actual": 5746.72 }, { "year": "2024", "block": "Block 24 - 1", "category": "Landscape", "actual": 5412.84 }, { "year": "2025", "block": "Block 24 - 1", "category": "Landscape", "actual": 3924.03 }, { "year": "2020", "block": "Block 24 - 2", "category": "Landscape", "actual": 1860.09 }, { "year": "2021", "block": "Block 24 - 2", "category": "Landscape", "actual": 960.71 }, { "year": "2022", "block": "Block 24 - 2", "category": "Landscape", "actual": 2623.82 }, { "year": "2023", "block": "Block 24 - 2", "category": "Landscape", "actual": 1168.62 }, { "year": "2024", "block": "Block 24 - 2", "category": "Landscape", "actual": 1206 }, { "year": "2025", "block": "Block 24 - 2", "category": "Landscape", "actual": 1267.89 }, { "year": "2020", "block": "Block 24 - 3", "category": "Landscape", "actual": 1379.86 }, { "year": "2021", "block": "Block 24 - 3", "category": "Landscape", "actual": 1009.62 }, { "year": "2022", "block": "Block 24 - 3", "category": "Landscape", "actual": 1009.92 }, { "year": "2023", "block": "Block 24 - 3", "category": "Landscape", "actual": 1038.75 }, { "year": "2024", "block": "Block 24 - 3", "category": "Landscape", "actual": 1071.31 }, { "year": "2025", "block": "Block 24 - 3", "category": "Landscape", "actual": 989.52 }, { "year": "2020", "block": "Block 25 - 1", "category": "Landscape", "actual": 1276.54 }, { "year": "2021", "block": "Block 25 - 1", "category": "Landscape", "actual": 465.95 }, { "year": "2022", "block": "Block 25 - 1", "category": "Landscape", "actual": 504.96 }, { "year": "2023", "block": "Block 25 - 1", "category": "Landscape", "actual": 2613.69 }, { "year": "2024", "block": "Block 25 - 1", "category": "Landscape", "actual": 535.64 }, { "year": "2025", "block": "Block 25 - 1", "category": "Landscape", "actual": 494.76 }, { "year": "2021", "block": "Block 26 - 1", "category": "Landscape", "actual": 932.07 }, { "year": "2022", "block": "Block 26 - 1", "category": "Landscape", "actual": 1395.93 }, { "year": "2023", "block": "Block 26 - 1", "category": "Landscape", "actual": 1650.95 }, { "year": "2024", "block": "Block 26 - 1", "category": "Landscape", "actual": 1774.33 }, { "year": "2025", "block": "Block 26 - 1", "category": "Landscape", "actual": 1410.96 }, { "year": "2020", "block": "Block 27 - 1", "category": "Landscape", "actual": 1386.31 }, { "year": "2021", "block": "Block 27 - 1", "category": "Landscape", "actual": 0 }, { "year": "2020", "block": "Block 27-2", "category": "Landscape", "actual": 0 }, { "year": "2021", "block": "Block 27-2", "category": "Landscape", "actual": 0 }, { "year": "2022", "block": "Block 27-2", "category": "Landscape", "actual": 309.94 }, { "year": "2023", "block": "Block 27-2", "category": "Landscape", "actual": 223.86 }, { "year": "2024", "block": "Block 27-2", "category": "Landscape", "actual": 0 }, { "year": "2025", "block": "Block 27-2", "category": "Landscape", "actual": 90.61 }, { "year": "2020", "block": "Block 3 - 1", "category": "Landscape", "actual": 5397.62 }, { "year": "2021", "block": "Block 3 - 1", "category": "Landscape", "actual": 4774.9 }, { "year": "2022", "block": "Block 3 - 1", "category": "Landscape", "actual": 5946.36 }, { "year": "2023", "block": "Block 3 - 1", "category": "Landscape", "actual": 5324.09 }, { "year": "2024", "block": "Block 3 - 1", "category": "Landscape", "actual": 6100.83 }, { "year": "2025", "block": "Block 3 - 1", "category": "Landscape", "actual": 6523.81 }, { "year": "2020", "block": "Block 30 - 1", "category": "Landscape", "actual": 1256.99 }, { "year": "2021", "block": "Block 30 - 1", "category": "Landscape", "actual": 1514.52 }, { "year": "2022", "block": "Block 30 - 1", "category": "Landscape", "actual": 1680.38 }, { "year": "2023", "block": "Block 30 - 1", "category": "Landscape", "actual": 2765.53 }, { "year": "2024", "block": "Block 30 - 1", "category": "Landscape", "actual": 1608.07 }, { "year": "2025", "block": "Block 30 - 1", "category": "Landscape", "actual": 1787.86 }, { "year": "2020", "block": "Block 32 - 1", "category": "Landscape", "actual": 4448.73 }, { "year": "2021", "block": "Block 32 - 1", "category": "Landscape", "actual": 7990.98 }, { "year": "2022", "block": "Block 32 - 1", "category": "Landscape", "actual": 5813.78 }, { "year": "2023", "block": "Block 32 - 1", "category": "Landscape", "actual": 7890.98 }, { "year": "2024", "block": "Block 32 - 1", "category": "Landscape", "actual": 7293.45 }, { "year": "2025", "block": "Block 32 - 1", "category": "Landscape", "actual": 5843.83 }, { "year": "2020", "block": "Block 32 - 2", "category": "Landscape", "actual": 3304.82 }, { "year": "2021", "block": "Block 32 - 2", "category": "Landscape", "actual": 2562.15 }, { "year": "2022", "block": "Block 32 - 2", "category": "Landscape", "actual": 4497.66 }, { "year": "2023", "block": "Block 32 - 2", "category": "Landscape", "actual": 4745.69 }, { "year": "2024", "block": "Block 32 - 2", "category": "Landscape", "actual": 3483.25 }, { "year": "2025", "block": "Block 32 - 2", "category": "Landscape", "actual": 3137.17 }, { "year": "2020", "block": "Block 33-1", "category": "Landscape", "actual": 0 }, { "year": "2021", "block": "Block 33-1", "category": "Landscape", "actual": 0 }, { "year": "2022", "block": "Block 33-1", "category": "Landscape", "actual": 270.13 }, { "year": "2023", "block": "Block 33-1", "category": "Landscape", "actual": 405.12 }, { "year": "2024", "block": "Block 33-1", "category": "Landscape", "actual": 491.58 }, { "year": "2025", "block": "Block 33-1", "category": "Landscape", "actual": 413.79 }, { "year": "2020", "block": "Block 33-2", "category": "Landscape", "actual": 0 }, { "year": "2021", "block": "Block 33-2", "category": "Landscape", "actual": 0 }, { "year": "2022", "block": "Block 33-2", "category": "Landscape", "actual": 0 }, { "year": "2023", "block": "Block 33-2", "category": "Landscape", "actual": 111.31 }, { "year": "2024", "block": "Block 33-2", "category": "Landscape", "actual": 40.97 }, { "year": "2025", "block": "Block 33-2", "category": "Landscape", "actual": 77.85 }, { "year": "2020", "block": "Block 34 - 1", "category": "Landscape", "actual": 11635.42 }, { "year": "2021", "block": "Block 34 - 1", "category": "Landscape", "actual": 7542.29 }, { "year": "2022", "block": "Block 34 - 1", "category": "Landscape", "actual": 8235.04 }, { "year": "2023", "block": "Block 34 - 1", "category": "Landscape", "actual": 10275.66 }, { "year": "2024", "block": "Block 34 - 1", "category": "Landscape", "actual": 16985.06 }, { "year": "2025", "block": "Block 34 - 1", "category": "Landscape", "actual": 8135.28 }, { "year": "2020", "block": "Block 34 - 2", "category": "Landscape", "actual": 5709.39 }, { "year": "2021", "block": "Block 34 - 2", "category": "Landscape", "actual": 2838.71 }, { "year": "2022", "block": "Block 34 - 2", "category": "Landscape", "actual": 3761.84 }, { "year": "2023", "block": "Block 34 - 2", "category": "Landscape", "actual": 4293.21 }, { "year": "2024", "block": "Block 34 - 2", "category": "Landscape", "actual": 3643.35 }, { "year": "2025", "block": "Block 34 - 2", "category": "Landscape", "actual": 4172.62 }, { "year": "2020", "block": "Block 9 - 1", "category": "Landscape", "actual": 12040.94 }, { "year": "2021", "block": "Block 9 - 1", "category": "Landscape", "actual": 9794.73 }, { "year": "2022", "block": "Block 9 - 1", "category": "Landscape", "actual": 15371.22 }, { "year": "2023", "block": "Block 9 - 1", "category": "Landscape", "actual": 20336.58 }, { "year": "2024", "block": "Block 9 - 1", "category": "Landscape", "actual": 22641.83 }, { "year": "2025", "block": "Block 9 - 1", "category": "Landscape", "actual": 16241.85 }, { "year": "2020", "block": "Block 10 - 1", "category": "Repairs & Maintenance", "actual": 2996.84 }, { "year": "2021", "block": "Block 10 - 1", "category": "Repairs & Maintenance", "actual": 3245.37 }, { "year": "2022", "block": "Block 10 - 1", "category": "Repairs & Maintenance", "actual": 5046.44 }, { "year": "2023", "block": "Block 10 - 1", "category": "Repairs & Maintenance", "actual": 6813.24 }, { "year": "2024", "block": "Block 10 - 1", "category": "Repairs & Maintenance", "actual": 9549.31 }, { "year": "2025", "block": "Block 10 - 1", "category": "Repairs & Maintenance", "actual": 9336 }, { "year": "2020", "block": "Block 11 - 3", "category": "Repairs & Maintenance", "actual": 2459.32 }, { "year": "2021", "block": "Block 11 - 3", "category": "Repairs & Maintenance", "actual": 2688.54 }, { "year": "2022", "block": "Block 11 - 3", "category": "Repairs & Maintenance", "actual": 3346.73 }, { "year": "2023", "block": "Block 11 - 3", "category": "Repairs & Maintenance", "actual": 4023.91 }, { "year": "2024", "block": "Block 11 - 3", "category": "Repairs & Maintenance", "actual": 2790.2 }, { "year": "2025", "block": "Block 11 - 3", "category": "Repairs & Maintenance", "actual": 2702.87 }, { "year": "2020", "block": "Block 16 - 2N", "category": "Repairs & Maintenance", "actual": 2502.2 }, { "year": "2021", "block": "Block 16 - 2N", "category": "Repairs & Maintenance", "actual": 1608.96 }, { "year": "2022", "block": "Block 16 - 2N", "category": "Repairs & Maintenance", "actual": 2128.57 }, { "year": "2023", "block": "Block 16 - 2N", "category": "Repairs & Maintenance", "actual": 2783.87 }, { "year": "2024", "block": "Block 16 - 2N", "category": "Repairs & Maintenance", "actual": 3766.59 }, { "year": "2025", "block": "Block 16 - 2N", "category": "Repairs & Maintenance", "actual": 1695.78 }, { "year": "2020", "block": "Block 16 - 2S", "category": "Repairs & Maintenance", "actual": 731.24 }, { "year": "2021", "block": "Block 16 - 2S", "category": "Repairs & Maintenance", "actual": 521.9 }, { "year": "2022", "block": "Block 16 - 2S", "category": "Repairs & Maintenance", "actual": 2371.38 }, { "year": "2023", "block": "Block 16 - 2S", "category": "Repairs & Maintenance", "actual": 14210.57 }, { "year": "2024", "block": "Block 16 - 2S", "category": "Repairs & Maintenance", "actual": 2509.2 }, { "year": "2025", "block": "Block 16 - 2S", "category": "Repairs & Maintenance", "actual": 3232.39 }, { "year": "2020", "block": "Block 16 - 4", "category": "Repairs & Maintenance", "actual": 1316.22 }, { "year": "2021", "block": "Block 16 - 4", "category": "Repairs & Maintenance", "actual": 1655.19 }, { "year": "2022", "block": "Block 16 - 4", "category": "Repairs & Maintenance", "actual": 1595.4 }, { "year": "2023", "block": "Block 16 - 4", "category": "Repairs & Maintenance", "actual": 3254.47 }, { "year": "2024", "block": "Block 16 - 4", "category": "Repairs & Maintenance", "actual": 2141.99 }, { "year": "2025", "block": "Block 16 - 4", "category": "Repairs & Maintenance", "actual": 4549.5 }, { "year": "2020", "block": "Block 18 - 2", "category": "Repairs & Maintenance", "actual": 2095.3 }, { "year": "2021", "block": "Block 18 - 2", "category": "Repairs & Maintenance", "actual": 2950.2 }, { "year": "2022", "block": "Block 18 - 2", "category": "Repairs & Maintenance", "actual": 2132.5 }, { "year": "2023", "block": "Block 18 - 2", "category": "Repairs & Maintenance", "actual": 1735.23 }, { "year": "2024", "block": "Block 18 - 2", "category": "Repairs & Maintenance", "actual": 6290.9 }, { "year": "2025", "block": "Block 18 - 2", "category": "Repairs & Maintenance", "actual": 1928.58 }, { "year": "2020", "block": "Block 2 - 2", "category": "Repairs & Maintenance", "actual": 2497.63 }, { "year": "2021", "block": "Block 2 - 2", "category": "Repairs & Maintenance", "actual": 3109.44 }, { "year": "2022", "block": "Block 2 - 2", "category": "Repairs & Maintenance", "actual": 3590.67 }, { "year": "2023", "block": "Block 2 - 2", "category": "Repairs & Maintenance", "actual": 1672.18 }, { "year": "2024", "block": "Block 2 - 2", "category": "Repairs & Maintenance", "actual": 4593.2 }, { "year": "2025", "block": "Block 2 - 2", "category": "Repairs & Maintenance", "actual": 9402.21 }, { "year": "2020", "block": "Block 21 - 4", "category": "Repairs & Maintenance", "actual": 1882.07 }, { "year": "2021", "block": "Block 21 - 4", "category": "Repairs & Maintenance", "actual": 3410.07 }, { "year": "2022", "block": "Block 21 - 4", "category": "Repairs & Maintenance", "actual": 2468.66 }, { "year": "2023", "block": "Block 21 - 4", "category": "Repairs & Maintenance", "actual": 1910.6 }, { "year": "2024", "block": "Block 21 - 4", "category": "Repairs & Maintenance", "actual": 2690.84 }, { "year": "2025", "block": "Block 21 - 4", "category": "Repairs & Maintenance", "actual": 2290.41 }, { "year": "2020", "block": "Block 23 - 4", "category": "Repairs & Maintenance", "actual": 1472.09 }, { "year": "2021", "block": "Block 23 - 4", "category": "Repairs & Maintenance", "actual": 2880.44 }, { "year": "2022", "block": "Block 23 - 4", "category": "Repairs & Maintenance", "actual": 1669.42 }, { "year": "2023", "block": "Block 23 - 4", "category": "Repairs & Maintenance", "actual": 1735.23 }, { "year": "2024", "block": "Block 23 - 4", "category": "Repairs & Maintenance", "actual": 6920.12 }, { "year": "2025", "block": "Block 23 - 4", "category": "Repairs & Maintenance", "actual": 1892.16 }, { "year": "2020", "block": "Block 24 - 1", "category": "Repairs & Maintenance", "actual": 3601.12 }, { "year": "2021", "block": "Block 24 - 1", "category": "Repairs & Maintenance", "actual": 6534.86 }, { "year": "2022", "block": "Block 24 - 1", "category": "Repairs & Maintenance", "actual": 5581.47 }, { "year": "2023", "block": "Block 24 - 1", "category": "Repairs & Maintenance", "actual": 8105.24 }, { "year": "2024", "block": "Block 24 - 1", "category": "Repairs & Maintenance", "actual": 12649.81 }, { "year": "2025", "block": "Block 24 - 1", "category": "Repairs & Maintenance", "actual": 6571.6 }, { "year": "2020", "block": "Block 24 - 2", "category": "Repairs & Maintenance", "actual": 507.34 }, { "year": "2021", "block": "Block 24 - 2", "category": "Repairs & Maintenance", "actual": 926.27 }, { "year": "2022", "block": "Block 24 - 2", "category": "Repairs & Maintenance", "actual": 996.11 }, { "year": "2023", "block": "Block 24 - 2", "category": "Repairs & Maintenance", "actual": 336 }, { "year": "2024", "block": "Block 24 - 2", "category": "Repairs & Maintenance", "actual": 258.22 }, { "year": "2025", "block": "Block 24 - 2", "category": "Repairs & Maintenance", "actual": 0 }, { "year": "2020", "block": "Block 24 - 3", "category": "Repairs & Maintenance", "actual": 0 }, { "year": "2021", "block": "Block 24 - 3", "category": "Repairs & Maintenance", "actual": 0 }, { "year": "2022", "block": "Block 24 - 3", "category": "Repairs & Maintenance", "actual": 497.83 }, { "year": "2023", "block": "Block 24 - 3", "category": "Repairs & Maintenance", "actual": 0 }, { "year": "2020", "block": "Block 25 - 1", "category": "Repairs & Maintenance", "actual": 1085.57 }, { "year": "2021", "block": "Block 25 - 1", "category": "Repairs & Maintenance", "actual": 1558.42 }, { "year": "2022", "block": "Block 25 - 1", "category": "Repairs & Maintenance", "actual": 6959.02 }, { "year": "2023", "block": "Block 25 - 1", "category": "Repairs & Maintenance", "actual": 938.16 }, { "year": "2024", "block": "Block 25 - 1", "category": "Repairs & Maintenance", "actual": 2056.34 }, { "year": "2025", "block": "Block 25 - 1", "category": "Repairs & Maintenance", "actual": 1020.28 }, { "year": "2020", "block": "Block 26 - 1", "category": "Repairs & Maintenance", "actual": 1031.42 }, { "year": "2021", "block": "Block 26 - 1", "category": "Repairs & Maintenance", "actual": 1819.12 }, { "year": "2022", "block": "Block 26 - 1", "category": "Repairs & Maintenance", "actual": 1500 }, { "year": "2023", "block": "Block 26 - 1", "category": "Repairs & Maintenance", "actual": 2483.53 }, { "year": "2024", "block": "Block 26 - 1", "category": "Repairs & Maintenance", "actual": 5270.32 }, { "year": "2025", "block": "Block 26 - 1", "category": "Repairs & Maintenance", "actual": 3146.43 }, { "year": "2020", "block": "Block 26 - A", "category": "Repairs & Maintenance", "actual": 1019.34 }, { "year": "2021", "block": "Block 26 - A", "category": "Repairs & Maintenance", "actual": 1724.61 }, { "year": "2022", "block": "Block 26 - A", "category": "Repairs & Maintenance", "actual": 1209.23 }, { "year": "2023", "block": "Block 26 - A", "category": "Repairs & Maintenance", "actual": 2340.06 }, { "year": "2024", "block": "Block 26 - A", "category": "Repairs & Maintenance", "actual": 1487.04 }, { "year": "2025", "block": "Block 26 - A", "category": "Repairs & Maintenance", "actual": 2320.98 }, { "year": "2020", "block": "Block 27 - 1", "category": "Repairs & Maintenance", "actual": 1745.72 }, { "year": "2021", "block": "Block 27 - 1", "category": "Repairs & Maintenance", "actual": 4056.32 }, { "year": "2022", "block": "Block 27 - 1", "category": "Repairs & Maintenance", "actual": 1746.54 }, { "year": "2023", "block": "Block 27 - 1", "category": "Repairs & Maintenance", "actual": 3006.35 }, { "year": "2024", "block": "Block 27 - 1", "category": "Repairs & Maintenance", "actual": 2612.58 }, { "year": "2025", "block": "Block 27 - 1", "category": "Repairs & Maintenance", "actual": 2531.8 }, { "year": "2020", "block": "Block 3 - 1", "category": "Repairs & Maintenance", "actual": 7942.87 }, { "year": "2021", "block": "Block 3 - 1", "category": "Repairs & Maintenance", "actual": 12678.93 }, { "year": "2022", "block": "Block 3 - 1", "category": "Repairs & Maintenance", "actual": 7450.36 }, { "year": "2023", "block": "Block 3 - 1", "category": "Repairs & Maintenance", "actual": 14702.44 }, { "year": "2024", "block": "Block 3 - 1", "category": "Repairs & Maintenance", "actual": 3391.79 }, { "year": "2025", "block": "Block 3 - 1", "category": "Repairs & Maintenance", "actual": 10897.84 }, { "year": "2020", "block": "Block 30 - 1", "category": "Repairs & Maintenance", "actual": 5829.94 }, { "year": "2021", "block": "Block 30 - 1", "category": "Repairs & Maintenance", "actual": 4139.21 }, { "year": "2022", "block": "Block 30 - 1", "category": "Repairs & Maintenance", "actual": 5207.08 }, { "year": "2023", "block": "Block 30 - 1", "category": "Repairs & Maintenance", "actual": 6731.74 }, { "year": "2024", "block": "Block 30 - 1", "category": "Repairs & Maintenance", "actual": 5632.93 }, { "year": "2025", "block": "Block 30 - 1", "category": "Repairs & Maintenance", "actual": 3508.34 }, { "year": "2020", "block": "Block 30 - 2", "category": "Repairs & Maintenance", "actual": 1149.17 }, { "year": "2021", "block": "Block 30 - 2", "category": "Repairs & Maintenance", "actual": 1904.45 }, { "year": "2022", "block": "Block 30 - 2", "category": "Repairs & Maintenance", "actual": 2656.23 }, { "year": "2023", "block": "Block 30 - 2", "category": "Repairs & Maintenance", "actual": 1374.75 }, { "year": "2024", "block": "Block 30 - 2", "category": "Repairs & Maintenance", "actual": 1424.31 }, { "year": "2025", "block": "Block 30 - 2", "category": "Repairs & Maintenance", "actual": 989.52 }, { "year": "2020", "block": "Block 32 - 1", "category": "Repairs & Maintenance", "actual": 8763.35 }, { "year": "2021", "block": "Block 32 - 1", "category": "Repairs & Maintenance", "actual": 9498.66 }, { "year": "2022", "block": "Block 32 - 1", "category": "Repairs & Maintenance", "actual": 9082.57 }, { "year": "2023", "block": "Block 32 - 1", "category": "Repairs & Maintenance", "actual": 9733.09 }, { "year": "2024", "block": "Block 32 - 1", "category": "Repairs & Maintenance", "actual": 11015.14 }, { "year": "2025", "block": "Block 32 - 1", "category": "Repairs & Maintenance", "actual": 9617.95 }, { "year": "2020", "block": "Block 32 - 2", "category": "Repairs & Maintenance", "actual": 124.3 }, { "year": "2021", "block": "Block 32 - 2", "category": "Repairs & Maintenance", "actual": 0 }, { "year": "2022", "block": "Block 32 - 2", "category": "Repairs & Maintenance", "actual": 1656.85 }, { "year": "2023", "block": "Block 32 - 2", "category": "Repairs & Maintenance", "actual": 112.75 }, { "year": "2024", "block": "Block 32 - 2", "category": "Repairs & Maintenance", "actual": 0 }, { "year": "2025", "block": "Block 32 - 2", "category": "Repairs & Maintenance", "actual": 384.35 }, { "year": "2020", "block": "Block 33-1", "category": "Repairs & Maintenance", "actual": 0 }, { "year": "2021", "block": "Block 33-1", "category": "Repairs & Maintenance", "actual": 479.59 }, { "year": "2022", "block": "Block 33-1", "category": "Repairs & Maintenance", "actual": 920.79 }, { "year": "2023", "block": "Block 33-1", "category": "Repairs & Maintenance", "actual": 1176.07 }, { "year": "2024", "block": "Block 33-1", "category": "Repairs & Maintenance", "actual": 1023.04 }, { "year": "2025", "block": "Block 33-1", "category": "Repairs & Maintenance", "actual": 732.74 }, { "year": "2020", "block": "Block 34 - 1", "category": "Repairs & Maintenance", "actual": 7236.35 }, { "year": "2021", "block": "Block 34 - 1", "category": "Repairs & Maintenance", "actual": 9027.47 }, { "year": "2022", "block": "Block 34 - 1", "category": "Repairs & Maintenance", "actual": 8495.46 }, { "year": "2023", "block": "Block 34 - 1", "category": "Repairs & Maintenance", "actual": 8519.09 }, { "year": "2024", "block": "Block 34 - 1", "category": "Repairs & Maintenance", "actual": 8311.12 }, { "year": "2025", "block": "Block 34 - 1", "category": "Repairs & Maintenance", "actual": 10694.12 }, { "year": "2020", "block": "Block 34 - 2", "category": "Repairs & Maintenance", "actual": 138.96 }, { "year": "2021", "block": "Block 34 - 2", "category": "Repairs & Maintenance", "actual": 0 }, { "year": "2022", "block": "Block 34 - 2", "category": "Repairs & Maintenance", "actual": 569.84 }, { "year": "2023", "block": "Block 34 - 2", "category": "Repairs & Maintenance", "actual": 0 }, { "year": "2024", "block": "Block 34 - 2", "category": "Repairs & Maintenance", "actual": 2999 }, { "year": "2025", "block": "Block 34 - 2", "category": "Repairs & Maintenance", "actual": 0 }, { "year": "2020", "block": "Block 9 - 1", "category": "Repairs & Maintenance", "actual": 12838.35 }, { "year": "2021", "block": "Block 9 - 1", "category": "Repairs & Maintenance", "actual": 11720.93 }, { "year": "2022", "block": "Block 9 - 1", "category": "Repairs & Maintenance", "actual": 18072.63 }, { "year": "2023", "block": "Block 9 - 1", "category": "Repairs & Maintenance", "actual": 16755.08 }, { "year": "2024", "block": "Block 9 - 1", "category": "Repairs & Maintenance", "actual": 25067.83 }, { "year": "2025", "block": "Block 9 - 1", "category": "Repairs & Maintenance", "actual": 26211.27 }];
+const BLOCK_OPEX_2026_YTD = [{ "block": "Block 2 - 2", "actual": 1908, "budget": 3768, "variance": -1861, "variance_pct": -49.4 }, { "block": "Block 3 - 1", "actual": 10865, "budget": 12551, "variance": -1686, "variance_pct": -13.4 }, { "block": "Block 9 - 1", "actual": 23721, "budget": 38742, "variance": -15021, "variance_pct": -38.8 }, { "block": "Block 11 - 3", "actual": 2320, "budget": 4230, "variance": -1911, "variance_pct": -45.2 }, { "block": "Block 16 - 2N", "actual": 1962, "budget": 2168, "variance": -206, "variance_pct": -9.5 }, { "block": "Block 16 - 2S", "actual": 2402, "budget": 2391, "variance": 11, "variance_pct": 0.4 }, { "block": "Block 16 - 4", "actual": 795, "budget": 1833, "variance": -1038, "variance_pct": -56.6 }, { "block": "Block 18 - 2", "actual": 3759, "budget": 1320, "variance": 2439, "variance_pct": 184.7 }, { "block": "Block 21 - 4", "actual": 230, "budget": 988, "variance": -758, "variance_pct": -76.7 }, { "block": "Block 23 - 4", "actual": 259, "budget": 2423, "variance": -2164, "variance_pct": -89.3 }, { "block": "Block 24 - 1", "actual": 3129, "budget": 6759, "variance": -3629, "variance_pct": -53.7 }, { "block": "Block 24 - 2", "actual": 953, "budget": 1108, "variance": -156, "variance_pct": -14.1 }, { "block": "Block 24 - 3", "actual": 230, "budget": 93, "variance": 137, "variance_pct": 146.7 }, { "block": "Block 25 - 1", "actual": 107, "budget": 1122, "variance": -1015, "variance_pct": -90.5 }, { "block": "Block 26 - A", "actual": 173, "budget": 1088, "variance": -916, "variance_pct": -84.1 }, { "block": "Block 26 - 1", "actual": 728, "budget": 2840, "variance": -2112, "variance_pct": -74.4 }, { "block": "Block 30 - 1", "actual": 1854, "budget": 1788, "variance": 66, "variance_pct": 3.7 }, { "block": "Block 27 - 1", "actual": 749, "budget": 1880, "variance": -1131, "variance_pct": -60.1 }, { "block": "Block 30 - 2", "actual": 1104, "budget": 958, "variance": 145, "variance_pct": 15.2 }, { "block": "Block 32 - 1", "actual": 8270, "budget": 9415, "variance": -1145, "variance_pct": -12.2 }, { "block": "Block 32 - 2", "actual": 4385, "budget": 1655, "variance": 2730, "variance_pct": 164.9 }, { "block": "Block 33-1", "actual": 418, "budget": 916, "variance": -498, "variance_pct": -54.4 }, { "block": "Block 34 - 1", "actual": 9525, "budget": 9547, "variance": -22, "variance_pct": -0.2 }, { "block": "Block 34 - 2", "actual": 3289, "budget": 2505, "variance": 784, "variance_pct": 31.3 }, { "block": "Block 27-2", "actual": 115, "budget": 80, "variance": 35, "variance_pct": 43.9 }, { "block": "Block 33-2", "actual": 1739, "budget": 227, "variance": 1512, "variance_pct": 667.2 }, { "block": "Block 10 - 1", "actual": 3067, "budget": 6180, "variance": -3113, "variance_pct": -50.4 }];
+const BLOCK_OPEX_2025 = [{ "block": "Block 9 - 1", "actual": 91725, "budget": 83356, "variance": 8369, "variance_pct": 10 }, { "block": "Block 2 - 2", "actual": 12564, "budget": 5463, "variance": 7101, "variance_pct": 130 }, { "block": "Block 10 - 1", "actual": 14641, "budget": 11613, "variance": 3028, "variance_pct": 26.1 }, { "block": "Block 16 - 2N", "actual": 2055, "budget": 4833, "variance": -2778, "variance_pct": -57.5 }, { "block": "Block 24 - 1", "actual": 11213, "budget": 13988, "variance": -2775, "variance_pct": -19.8 }, { "block": "Block 25 - 1", "actual": 1404, "budget": 3823, "variance": -2420, "variance_pct": -63.3 }, { "block": "Block 30 - 1", "actual": 5775, "budget": 8059, "variance": -2284, "variance_pct": -28.3 }, { "block": "Block 16 - 2S", "actual": 4723, "budget": 6820, "variance": -2097, "variance_pct": -30.8 }, { "block": "Block 16 - 4", "actual": 6021, "budget": 4214, "variance": 1807, "variance_pct": 42.9 }, { "block": "Block 32 - 2", "actual": 4478, "budget": 3423, "variance": 1055, "variance_pct": 30.8 }, { "block": "Block 30 - 2", "actual": 2352, "budget": 1432, "variance": 920, "variance_pct": 64.2 }, { "block": "Block 26 - 1", "actual": 4876, "budget": 4016, "variance": 860, "variance_pct": 21.4 }, { "block": "Block 21 - 4", "actual": 2609, "budget": 1798, "variance": 811, "variance_pct": 45.1 }, { "block": "Block 26 - A", "actual": 2560, "budget": 1996, "variance": 564, "variance_pct": 28.3 }, { "block": "Block 33-2", "actual": 795, "budget": 293, "variance": 502, "variance_pct": 171.4 }, { "block": "Block 33-1", "actual": 1226, "budget": 1617, "variance": -391, "variance_pct": -24.2 }, { "block": "Block 34 - 2", "actual": 5018, "budget": 4644, "variance": 374, "variance_pct": 8 }, { "block": "Block 11 - 3", "actual": 7764, "budget": 8089, "variance": -325, "variance_pct": -4 }, { "block": "Block 32 - 1", "actual": 17167, "budget": 17464, "variance": -297, "variance_pct": -1.7 }, { "block": "Block 23 - 4", "actual": 3364, "budget": 3647, "variance": -283, "variance_pct": -7.8 }, { "block": "Block 18 - 2", "actual": 3401, "budget": 3674, "variance": -273, "variance_pct": -7.4 }, { "block": "Block 24 - 3", "actual": 1308, "budget": 1059, "variance": 249, "variance_pct": 23.5 }, { "block": "Block 3 - 1", "actual": 25374, "budget": 25214, "variance": 160, "variance_pct": 0.6 }, { "block": "Block 27 - 1", "actual": 2930, "budget": 3018, "variance": -88, "variance_pct": -2.9 }, { "block": "Block 34 - 1", "actual": 20679, "budget": 20746, "variance": -67, "variance_pct": -0.3 }, { "block": "Block 24 - 2", "actual": 2586, "budget": 2537, "variance": 49, "variance_pct": 1.9 }, { "block": "Block 27-2", "actual": 250, "budget": 266, "variance": -16, "variance_pct": -6 }];
+const RESERVE_YTD_BY_BLOCK = [{ "block": "Block 10 - 1", "reserve_expenses_ytd": 138.29, "balance_jan26": 190964.77, "balance_may26": 213054.2, "change_ytd": 22089.44 }, { "block": "Block 11 - 3", "reserve_expenses_ytd": 0, "balance_jan26": 153937.62, "balance_may26": 168381.67, "change_ytd": 14444.05 }, { "block": "Block 16 - 2N", "reserve_expenses_ytd": 0, "balance_jan26": 29055.59, "balance_may26": 32342.44, "change_ytd": 3286.85 }, { "block": "Block 16 - 2S", "reserve_expenses_ytd": 120, "balance_jan26": 45358.87, "balance_may26": 51177.55, "change_ytd": 5818.68 }, { "block": "Block 16 - 4", "reserve_expenses_ytd": 0, "balance_jan26": 121204.68, "balance_may26": 135250.91, "change_ytd": 14046.23 }, { "block": "Block 18 - 2", "reserve_expenses_ytd": 0, "balance_jan26": 129896.95, "balance_may26": 143629.73, "change_ytd": 13732.78 }, { "block": "Block 2 - 2", "reserve_expenses_ytd": 164.74, "balance_jan26": 107417.76, "balance_may26": 119035.36, "change_ytd": 11617.6 }, { "block": "Block 21 - 4", "reserve_expenses_ytd": 175.09, "balance_jan26": 128862.09, "balance_may26": 143244.55, "change_ytd": 14382.46 }, { "block": "Block 23 - 4", "reserve_expenses_ytd": 0, "balance_jan26": 137041.17, "balance_may26": 150441.64, "change_ytd": 13400.47 }, { "block": "Block 24 - 1", "reserve_expenses_ytd": 188.31, "balance_jan26": 216874.32, "balance_may26": 245724.54, "change_ytd": 28850.22 }, { "block": "Block 24 - 2", "reserve_expenses_ytd": 0, "balance_jan26": 37152.09, "balance_may26": 42004.23, "change_ytd": 4852.14 }, { "block": "Block 24 - 3", "reserve_expenses_ytd": 0, "balance_jan26": 27525.23, "balance_may26": 29326.64, "change_ytd": 1801.41 }, { "block": "Block 25 - 1", "reserve_expenses_ytd": 108.39, "balance_jan26": 54003.13, "balance_may26": 57065.18, "change_ytd": 3062.06 }, { "block": "Block 26 - 1", "reserve_expenses_ytd": 0, "balance_jan26": 87361.94, "balance_may26": 92195.64, "change_ytd": 4833.71 }, { "block": "Block 26 - A", "reserve_expenses_ytd": 0, "balance_jan26": 74425.47, "balance_may26": 79521.04, "change_ytd": 5095.57 }, { "block": "Block 27 - 1", "reserve_expenses_ytd": 0, "balance_jan26": 84879.22, "balance_may26": 91778.29, "change_ytd": 6899.08 }, { "block": "Block 27-2", "reserve_expenses_ytd": 0, "balance_jan26": 7160.1, "balance_may26": 7687.18, "change_ytd": 527.08 }, { "block": "Block 3 - 1", "reserve_expenses_ytd": 294522.96, "balance_jan26": 185270.13, "balance_may26": -58522.64, "change_ytd": -243792.77 }, { "block": "Block 30 - 1", "reserve_expenses_ytd": 0, "balance_jan26": 183721.97, "balance_may26": 206910.13, "change_ytd": 23188.16 }, { "block": "Block 30 - 2", "reserve_expenses_ytd": 0, "balance_jan26": 32693.35, "balance_may26": 35814.89, "change_ytd": 3121.54 }, { "block": "Block 32 - 1", "reserve_expenses_ytd": 198.36, "balance_jan26": 347673.55, "balance_may26": 391514.73, "change_ytd": 43841.18 }, { "block": "Block 32 - 2", "reserve_expenses_ytd": 0, "balance_jan26": 24299.92, "balance_may26": 28283.36, "change_ytd": 3983.44 }, { "block": "Block 33-1", "reserve_expenses_ytd": 0, "balance_jan26": 18562.87, "balance_may26": 21512.67, "change_ytd": 2949.81 }, { "block": "Block 33-2", "reserve_expenses_ytd": 0, "balance_jan26": 11446.4, "balance_may26": 12039.4, "change_ytd": 593.01 }, { "block": "Block 34 - 1", "reserve_expenses_ytd": 0, "balance_jan26": 501926.69, "balance_may26": 541555.32, "change_ytd": 39628.64 }, { "block": "Block 34 - 2", "reserve_expenses_ytd": 0, "balance_jan26": 20202.4, "balance_may26": 23783.99, "change_ytd": 3581.59 }, { "block": "Block 9 - 1", "reserve_expenses_ytd": 1838.29, "balance_jan26": 574182.1, "balance_may26": 629608.1, "change_ytd": 55426.01 }, { "block": "Block 9-2", "reserve_expenses_ytd": 0, "balance_jan26": 22494.76, "balance_may26": 22768.15, "change_ytd": 273.39 }, { "block": "Non-Block Specific", "reserve_expenses_ytd": 0, "balance_jan26": 28626.42, "balance_may26": 28974.33, "change_ytd": 347.91 }];
+const SPECIAL_ASSESSMENT_ADJUSTMENTS = [
+  { block: "Block 3 - 1", amount: 294522.96, note: "Special assessment \u2014 funded separately, does not reduce this block's reserve fund balance." }
+];
+const INK = "#1C2B39";
+const PAPER = "#EFEDE6";
+const PAPER_RAISED = "#F8F7F3";
+const SLATE = "#5B6472";
+const BLUE = "#2E5C8A";
+const GREEN = "#4B7A5B";
+const AMBER = "#B8792F";
+const RUST = "#A34A3E";
+const LINE = "#D8D4C8";
+function fundColor(pct) {
+  if (pct >= 90) return GREEN;
+  if (pct >= 60) return "#7C9A6C";
+  if (pct >= 40) return AMBER;
+  return RUST;
+}
+function fmtMoney(n, opts = {}) {
+  const { compact = true } = opts;
+  if (n == null) return "\u2014";
+  if (compact) {
+    if (Math.abs(n) >= 1e6) return "$" + (n / 1e6).toFixed(2) + "M";
+    if (Math.abs(n) >= 1e3) return "$" + (n / 1e3).toFixed(0) + "K";
+  }
+  return "$" + Math.round(n).toLocaleString();
+}
+const monthLabel = (m) => m.replace("March", "Mar");
+function blockSortKey(blockStr) {
+  const m = blockStr.match(/Block\s*(\d+)\s*-?\s*([0-9A-Za-z]*)/i);
+  if (!m) return [9999, blockStr];
+  const num = parseInt(m[1], 10);
+  const sub = m[2] || "";
+  const subNum = parseInt(sub, 10);
+  return [num, isNaN(subNum) ? sub : subNum, sub];
+}
+function compareBlocks(a, b) {
+  const ka = blockSortKey(a), kb = blockSortKey(b);
+  if (ka[0] !== kb[0]) return ka[0] - kb[0];
+  const av = ka[1], bv = kb[1];
+  if (typeof av === "number" && typeof bv === "number") return av - bv;
+  return String(av).localeCompare(String(bv));
+}
+function blockJoinKey(blockStr) {
+  return blockStr.replace(/\s+/g, "").toLowerCase();
+}
+function Dashboard() {
+  const [sortKey, setSortKey] = useState("block");
+  const [sortDir, setSortDir] = useState("asc");
+  const [hoveredBlock, setHoveredBlock] = useState(null);
+  const chartTrend = RESERVE_TREND.filter((d) => d.month !== "Dec 23");
+  const latestActual = chartTrend.filter((d) => d.status === "actual").slice(-1)[0];
+  const firstPoint = chartTrend[0];
+  const changeAmt = latestActual.total - firstPoint.total;
+  const changePct = changeAmt / firstPoint.total * 100;
+  const underfundedCount = STUDY_COMPARISON.filter((b) => b.pct_funded_2026 < 50).length;
+  const avgContribIncrease = useMemo(() => {
+    const total2025 = STUDY_COMPARISON.reduce((sum, b) => sum + (b.contrib_2025 || 0), 0);
+    const total2026 = STUDY_COMPARISON.reduce((sum, b) => sum + (b.contrib_2026 || 0), 0);
+    return (total2026 - total2025) / total2025 * 100;
+  }, []);
+  const sortedBlocks = useMemo(() => {
+    const arr = [...STUDY_COMPARISON];
+    if (sortKey === "block") {
+      arr.sort((a, b) => compareBlocks(a.block, b.block) * (sortDir === "asc" ? 1 : -1));
+    } else {
+      arr.sort((a, b) => {
+        const va = a[sortKey], vb = b[sortKey];
+        return sortDir === "asc" ? va - vb : vb - va;
+      });
+    }
+    return arr;
+  }, [sortKey, sortDir]);
+  const categories = [...new Set(OPEX_CATEGORY_YEAR.map((d) => d.category))].filter((c) => !["Reserve Expense", "Insurance", "Property Tax / SWM", "Other"].includes(c));
+  const years = [...new Set(OPEX_CATEGORY_YEAR.map((d) => d.year))].sort();
+  const opexByYear = years.map((year) => {
+    const row = { year };
+    categories.forEach((cat) => {
+      const rec = OPEX_CATEGORY_YEAR.find((d) => d.year === year && d.category === cat);
+      row[cat] = rec ? rec.actual : 0;
+    });
+    return row;
+  });
+  const catColors = {
+    "Repairs & Maintenance": BLUE,
+    "Landscape": GREEN,
+    "Utilities": AMBER,
+    "Reserve Study": SLATE
+  };
+  const mlBlocks = [...new Set(MAINT_LANDSCAPE_BY_BLOCK.map((d) => d.block))].sort(compareBlocks);
+  const [selectedBlock, setSelectedBlock] = useState(mlBlocks[0]);
+  const mlYears = [...new Set(MAINT_LANDSCAPE_BY_BLOCK.map((d) => d.year))].sort();
+  const mlTrend = useMemo(() => {
+    return mlYears.map((year) => {
+      const rm = MAINT_LANDSCAPE_BY_BLOCK.find((d) => d.year === year && d.block === selectedBlock && d.category === "Repairs & Maintenance");
+      const ls = MAINT_LANDSCAPE_BY_BLOCK.find((d) => d.year === year && d.block === selectedBlock && d.category === "Landscape");
+      return { year, "Repairs & Maintenance": rm ? rm.actual : 0, "Landscape": ls ? ls.actual : 0 };
+    });
+  }, [selectedBlock]);
+  const [opexSortKey, setOpexSortKey] = useState("block");
+  const [opexSortDir, setOpexSortDir] = useState("asc");
+  const sortedOpex2025 = useMemo(() => {
+    const arr = [...BLOCK_OPEX_2025];
+    if (opexSortKey === "block") {
+      arr.sort((a, b) => compareBlocks(a.block, b.block) * (opexSortDir === "asc" ? 1 : -1));
+    } else {
+      arr.sort((a, b) => {
+        const va = a[opexSortKey], vb = b[opexSortKey];
+        return opexSortDir === "asc" ? va - vb : vb - va;
+      });
+    }
+    return arr;
+  }, [opexSortKey, opexSortDir]);
+  const handleOpexSort = (key) => {
+    if (opexSortKey === key) setOpexSortDir((d) => d === "asc" ? "desc" : "asc");
+    else {
+      setOpexSortKey(key);
+      setOpexSortDir("desc");
+    }
+  };
+  const [ytdSortKey, setYtdSortKey] = useState("variance");
+  const [ytdSortDir, setYtdSortDir] = useState("desc");
+  const sortedOpex2026Ytd = useMemo(() => {
+    const arr = [...BLOCK_OPEX_2026_YTD];
+    if (ytdSortKey === "block") {
+      arr.sort((a, b) => compareBlocks(a.block, b.block) * (ytdSortDir === "asc" ? 1 : -1));
+    } else {
+      arr.sort((a, b) => {
+        const va = a[ytdSortKey], vb = b[ytdSortKey];
+        return ytdSortDir === "asc" ? va - vb : vb - va;
+      });
+    }
+    return arr;
+  }, [ytdSortKey, ytdSortDir]);
+  const handleYtdSort = (key) => {
+    if (ytdSortKey === key) setYtdSortDir((d) => d === "asc" ? "desc" : "asc");
+    else {
+      setYtdSortKey(key);
+      setYtdSortDir("desc");
+    }
+  };
+  const handleSort = (key) => {
+    if (sortKey === key) setSortDir((d) => d === "asc" ? "desc" : "asc");
+    else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+  };
+  const reserveYtdAdjusted = useMemo(() => {
+    return RESERVE_YTD_BY_BLOCK.map((r) => {
+      const adj = SPECIAL_ASSESSMENT_ADJUSTMENTS.find((a) => a.block === r.block);
+      const balance_may26_adj = adj ? r.balance_may26 + adj.amount : r.balance_may26;
+      const change_ytd_adj = adj ? r.change_ytd + adj.amount : r.change_ytd;
+      const study = STUDY_COMPARISON.find((s) => blockJoinKey(s.block) === blockJoinKey(r.block));
+      const idealOk = study && study.ideal_2026 && study.ideal_2026 > 1e3;
+      const pct_funded_current = idealOk ? Math.round(balance_may26_adj / study.ideal_2026 * 100) : null;
+      const pct_funded_jan = study ? study.pct_funded_2026 : null;
+      return { ...r, balance_may26_adj, change_ytd_adj, special: adj || null, pct_funded_current, pct_funded_jan };
+    });
+  }, []);
+  const [reserveYtdSortKey, setReserveYtdSortKey] = useState("reserve_expenses_ytd");
+  const [reserveYtdSortDir, setReserveYtdSortDir] = useState("desc");
+  const sortedReserveYtd = useMemo(() => {
+    const arr = [...reserveYtdAdjusted];
+    if (reserveYtdSortKey === "block") {
+      arr.sort((a, b) => compareBlocks(a.block, b.block) * (reserveYtdSortDir === "asc" ? 1 : -1));
+    } else {
+      arr.sort((a, b) => {
+        const va = a[reserveYtdSortKey], vb = b[reserveYtdSortKey];
+        return reserveYtdSortDir === "asc" ? va - vb : vb - va;
+      });
+    }
+    return arr;
+  }, [reserveYtdSortKey, reserveYtdSortDir]);
+  const handleReserveYtdSort = (key) => {
+    if (reserveYtdSortKey === key) setReserveYtdSortDir((d) => d === "asc" ? "desc" : "asc");
+    else {
+      setReserveYtdSortKey(key);
+      setReserveYtdSortDir("desc");
+    }
+  };
+  const topOverBudget2026 = useMemo(
+    () => [...BLOCK_OPEX_2026_YTD].filter((b) => b.variance > 0).sort((a, b) => b.variance - a.variance).slice(0, 3),
+    []
+  );
+  const currentPctFunded = useMemo(
+    () => reserveYtdAdjusted.filter((r) => r.pct_funded_current != null),
+    [reserveYtdAdjusted]
+  );
+  const lowestFunded2026 = useMemo(
+    () => [...currentPctFunded].sort((a, b) => a.pct_funded_current - b.pct_funded_current).slice(0, 3),
+    [currentPctFunded]
+  );
+  const topReserveExpense2026 = useMemo(
+    () => [...RESERVE_YTD_BY_BLOCK].filter((b) => b.reserve_expenses_ytd > 0).sort((a, b) => b.reserve_expenses_ytd - a.reserve_expenses_ytd).slice(0, 3),
+    []
+  );
+  return /* @__PURE__ */ React.createElement("div", { style: { background: PAPER, minHeight: "100%", fontFamily: "'Inter', -apple-system, sans-serif", color: INK } }, /* @__PURE__ */ React.createElement("style", null, `
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+        .mono { font-family: 'IBM Plex Mono', monospace; }
+        .disp { font-family: 'Fraunces', serif; }
+        th.sortable { cursor: pointer; user-select: none; }
+        th.sortable:hover { color: ${INK}; }
+        .block-tile { transition: transform 0.15s ease, box-shadow 0.15s ease; }
+        .block-tile:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(28,43,57,0.18); z-index: 2; }
+        .tbl-row:hover { background: ${PAPER}; }
+        html { scroll-behavior: smooth; }
+      `), /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 1180, margin: "0 auto", padding: "48px 32px 80px" } }, /* @__PURE__ */ React.createElement("div", { style: { borderBottom: `1px solid ${LINE}`, paddingBottom: 28, marginBottom: 36 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, letterSpacing: "0.12em", textTransform: "uppercase", color: BLUE, fontWeight: 600, marginBottom: 10 } }, "High Point HOA \xB7 Finance Committee"), /* @__PURE__ */ React.createElement("div", { className: "mono", style: { fontSize: 12, color: SLATE, background: PAPER_RAISED, border: `1px solid ${LINE}`, borderRadius: 3, padding: "4px 10px" } }, "Last updated: ", LAST_UPDATED)), /* @__PURE__ */ React.createElement("h1", { className: "disp", style: { fontSize: 40, fontWeight: 600, margin: 0, lineHeight: 1.1 } }, "Reserve & Operating Dashboard"), /* @__PURE__ */ React.createElement("p", { style: { color: SLATE, fontSize: 15, marginTop: 10, maxWidth: 640, lineHeight: 1.5 } }, "Block-level reserve health and operating spend, FY2020\u20132026. Reserve figures reflect the corrected allocation worksheets (Dec 2023 onward); months after May 2026 are budget projections, not actuals.")), /* @__PURE__ */ React.createElement("div", { style: {
+    position: "sticky",
+    top: 0,
+    zIndex: 40,
+    background: PAPER,
+    borderBottom: `1px solid ${LINE}`,
+    marginLeft: -32,
+    marginRight: -32,
+    paddingLeft: 32,
+    paddingRight: 32,
+    marginBottom: 36
+  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, padding: "10px 0", flexWrap: "wrap" } }, [
+    { href: "#attention", label: "Needs Attention" },
+    { href: "#operating", label: "2026 Operating" },
+    { href: "#reserves", label: "2026 Reserves" },
+    { href: "#trends", label: "Five Year Trends" }
+  ].map((item) => /* @__PURE__ */ React.createElement(
+    "a",
+    {
+      key: item.href,
+      href: item.href,
+      style: {
+        fontSize: 12.5,
+        fontWeight: 600,
+        color: BLUE,
+        textDecoration: "none",
+        padding: "6px 12px",
+        borderRadius: 20,
+        border: `1px solid ${BLUE}`,
+        background: PAPER_RAISED
+      }
+    },
+    item.label
+  )))), /* @__PURE__ */ React.createElement("div", { id: "attention", style: { scrollMarginTop: 60 } }), /* @__PURE__ */ React.createElement("section", { style: { marginBottom: 48 } }, /* @__PURE__ */ React.createElement(
+    SectionHeader,
+    {
+      eyebrow: "At a glance",
+      title: "Needs attention",
+      desc: "The biggest budget overruns, the lowest-funded blocks (recalculated from current balances, not just the Jan 1 study snapshot), and the largest reserve outlays so far this year."
+    }
+  ), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginTop: 20 } }, /* @__PURE__ */ React.createElement(
+    AttentionCard,
+    {
+      title: "Over operating budget \u2014 2026 YTD",
+      items: topOverBudget2026,
+      renderLine: (b) => [b.block, `+${fmtMoney(b.variance, { compact: false })} (${b.variance_pct > 0 ? "+" : ""}${b.variance_pct}%)`],
+      color: RUST
+    }
+  ), /* @__PURE__ */ React.createElement(
+    AttentionCard,
+    {
+      title: "Lowest reserve funding \u2014 current (as of May '26)",
+      items: lowestFunded2026,
+      renderLine: (b) => [b.block, `${b.pct_funded_current}% (was ${b.pct_funded_jan}% on 1/1)`],
+      color: AMBER
+    }
+  ), /* @__PURE__ */ React.createElement(
+    AttentionCard,
+    {
+      title: "Largest reserve outlays \u2014 2026 YTD",
+      items: topReserveExpense2026,
+      renderLine: (b) => [b.block, fmtMoney(b.reserve_expenses_ytd, { compact: false })],
+      color: BLUE
+    }
+  ))), /* @__PURE__ */ React.createElement("div", { id: "operating", style: { scrollMarginTop: 60 } }), /* @__PURE__ */ React.createElement(
+    SectionGroupHeader,
+    {
+      title: "2026 Operating",
+      desc: "Day-to-day spending by block, year-to-date."
+    }
+  ), /* @__PURE__ */ React.createElement("section", { style: { marginBottom: 48 } }, /* @__PURE__ */ React.createElement(
+    SectionHeader,
+    {
+      eyebrow: "Detail",
+      title: "Block operating costs \u2014 2026 YTD (through May)",
+      desc: "Same categories, year-to-date through the May 2026 report. Compare pace against the 2025 full-year table below."
+    }
+  ), /* @__PURE__ */ React.createElement(Collapsible, { closedLabel: "Click to view table", openLabel: "Hide table" }, /* @__PURE__ */ React.createElement("div", { style: { marginTop: 20, border: `1px solid ${LINE}`, borderRadius: 4, overflow: "hidden", background: PAPER_RAISED } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontSize: 13 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { background: INK, color: "#fff" } }, /* @__PURE__ */ React.createElement(Th, { label: "Block", k: "block", sortKey: ytdSortKey, sortDir: ytdSortDir, onClick: handleYtdSort, align: "left" }), /* @__PURE__ */ React.createElement(Th, { label: "Actual", k: "actual", sortKey: ytdSortKey, sortDir: ytdSortDir, onClick: handleYtdSort }), /* @__PURE__ */ React.createElement(Th, { label: "Budget", k: "budget", sortKey: ytdSortKey, sortDir: ytdSortDir, onClick: handleYtdSort }), /* @__PURE__ */ React.createElement(Th, { label: "Variance", k: "variance", sortKey: ytdSortKey, sortDir: ytdSortDir, onClick: handleYtdSort }), /* @__PURE__ */ React.createElement(Th, { label: "Variance %", k: "variance_pct", sortKey: ytdSortKey, sortDir: ytdSortDir, onClick: handleYtdSort }))), /* @__PURE__ */ React.createElement("tbody", null, sortedOpex2026Ytd.map((b, i) => /* @__PURE__ */ React.createElement("tr", { key: b.block, className: "tbl-row", style: { borderTop: `1px solid ${LINE}`, background: i % 2 ? "transparent" : "rgba(0,0,0,0.015)" } }, /* @__PURE__ */ React.createElement("td", { style: { padding: "9px 14px", fontWeight: 500 } }, b.block), /* @__PURE__ */ React.createElement("td", { className: "mono", style: { padding: "9px 14px", textAlign: "right" } }, fmtMoney(b.actual, { compact: false })), /* @__PURE__ */ React.createElement("td", { className: "mono", style: { padding: "9px 14px", textAlign: "right" } }, fmtMoney(b.budget, { compact: false })), /* @__PURE__ */ React.createElement("td", { className: "mono", style: { padding: "9px 14px", textAlign: "right", color: b.variance > 0 ? RUST : GREEN, fontWeight: 600 } }, b.variance > 0 ? "+" : "", fmtMoney(b.variance, { compact: false })), /* @__PURE__ */ React.createElement("td", { className: "mono", style: { padding: "9px 14px", textAlign: "right", color: b.variance > 0 ? RUST : GREEN } }, b.variance_pct == null ? "\u2014" : (b.variance_pct > 0 ? "+" : "") + b.variance_pct + "%")))))))), /* @__PURE__ */ React.createElement("section", { style: { marginBottom: 48 } }, /* @__PURE__ */ React.createElement(
+    SectionHeader,
+    {
+      eyebrow: "Detail",
+      title: "Block operating costs \u2014 2025",
+      desc: "Repairs & Maintenance, Landscape, Utilities, and Reserve Study combined, actual vs. budget by block. Sort any column."
+    }
+  ), /* @__PURE__ */ React.createElement(Collapsible, { closedLabel: "Click to view table", openLabel: "Hide table" }, /* @__PURE__ */ React.createElement("div", { style: { marginTop: 20, border: `1px solid ${LINE}`, borderRadius: 4, overflow: "hidden", background: PAPER_RAISED } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontSize: 13 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { background: INK, color: "#fff" } }, /* @__PURE__ */ React.createElement(Th, { label: "Block", k: "block", sortKey: opexSortKey, sortDir: opexSortDir, onClick: handleOpexSort, align: "left" }), /* @__PURE__ */ React.createElement(Th, { label: "Actual", k: "actual", sortKey: opexSortKey, sortDir: opexSortDir, onClick: handleOpexSort }), /* @__PURE__ */ React.createElement(Th, { label: "Budget", k: "budget", sortKey: opexSortKey, sortDir: opexSortDir, onClick: handleOpexSort }), /* @__PURE__ */ React.createElement(Th, { label: "Variance", k: "variance", sortKey: opexSortKey, sortDir: opexSortDir, onClick: handleOpexSort }), /* @__PURE__ */ React.createElement(Th, { label: "Variance %", k: "variance_pct", sortKey: opexSortKey, sortDir: opexSortDir, onClick: handleOpexSort }))), /* @__PURE__ */ React.createElement("tbody", null, sortedOpex2025.map((b, i) => /* @__PURE__ */ React.createElement("tr", { key: b.block, className: "tbl-row", style: { borderTop: `1px solid ${LINE}`, background: i % 2 ? "transparent" : "rgba(0,0,0,0.015)" } }, /* @__PURE__ */ React.createElement("td", { style: { padding: "9px 14px", fontWeight: 500 } }, b.block), /* @__PURE__ */ React.createElement("td", { className: "mono", style: { padding: "9px 14px", textAlign: "right" } }, fmtMoney(b.actual, { compact: false })), /* @__PURE__ */ React.createElement("td", { className: "mono", style: { padding: "9px 14px", textAlign: "right" } }, fmtMoney(b.budget, { compact: false })), /* @__PURE__ */ React.createElement("td", { className: "mono", style: { padding: "9px 14px", textAlign: "right", color: b.variance > 0 ? RUST : GREEN, fontWeight: 600 } }, b.variance > 0 ? "+" : "", fmtMoney(b.variance, { compact: false })), /* @__PURE__ */ React.createElement("td", { className: "mono", style: { padding: "9px 14px", textAlign: "right", color: b.variance > 0 ? RUST : GREEN } }, b.variance_pct == null ? "\u2014" : (b.variance_pct > 0 ? "+" : "") + b.variance_pct + "%")))))))), /* @__PURE__ */ React.createElement("div", { id: "reserves", style: { scrollMarginTop: 60 } }), /* @__PURE__ */ React.createElement(
+    SectionGroupHeader,
+    {
+      title: "2026 Reserves",
+      desc: "Fund health by block, year-to-date."
+    }
+  ), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 1, background: LINE, marginBottom: 44, border: `1px solid ${LINE}` } }, [
+    { label: "Total reserves (May 2026)", value: fmtMoney(latestActual.total), sub: "across 28 blocks" },
+    { label: "Change since Jan 2024", value: (changeAmt >= 0 ? "+" : "") + fmtMoney(changeAmt), sub: `${changePct.toFixed(0)}% growth` },
+    { label: "Blocks under 50% funded", value: underfundedCount, sub: "per 2026 reserve study", color: underfundedCount > 8 ? RUST : INK },
+    { label: "Total contribution increase", value: "+" + avgContribIncrease.toFixed(0) + "%", sub: "2025 study \u2192 2026 study, dollar-weighted", color: AMBER }
+  ].map((kpi, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { background: PAPER_RAISED, padding: "22px 22px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: SLATE, marginBottom: 8, letterSpacing: "0.02em" } }, kpi.label), /* @__PURE__ */ React.createElement("div", { className: "mono", style: { fontSize: 26, fontWeight: 500, color: kpi.color || INK } }, kpi.value), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: SLATE, marginTop: 4 } }, kpi.sub)))), /* @__PURE__ */ React.createElement("section", { style: { marginBottom: 48 } }, /* @__PURE__ */ React.createElement(
+    SectionHeader,
+    {
+      eyebrow: "Detail",
+      title: "Reserve fund by block \u2014 2026 YTD",
+      desc: "From the Reserve Allocation Worksheet directly: reserve expenses (capital spend out of the fund) and the resulting balance change, January through May 2026. Balance columns exclude any special-assessment-funded expenditures (see note below) so fund health isn't misread."
+    }
+  ), /* @__PURE__ */ React.createElement(Collapsible, { closedLabel: "Click to view table", openLabel: "Hide table" }, /* @__PURE__ */ React.createElement("div", { style: { marginTop: 20, border: `1px solid ${LINE}`, borderRadius: 4, overflow: "hidden", background: PAPER_RAISED } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontSize: 13 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { background: INK, color: "#fff" } }, /* @__PURE__ */ React.createElement(Th, { label: "Block", k: "block", sortKey: reserveYtdSortKey, sortDir: reserveYtdSortDir, onClick: handleReserveYtdSort, align: "left" }), /* @__PURE__ */ React.createElement(Th, { label: "Reserve expenses YTD", k: "reserve_expenses_ytd", sortKey: reserveYtdSortKey, sortDir: reserveYtdSortDir, onClick: handleReserveYtdSort }), /* @__PURE__ */ React.createElement(Th, { label: "Balance, Jan '26", k: "balance_jan26", sortKey: reserveYtdSortKey, sortDir: reserveYtdSortDir, onClick: handleReserveYtdSort }), /* @__PURE__ */ React.createElement(Th, { label: "Balance, May '26", k: "balance_may26_adj", sortKey: reserveYtdSortKey, sortDir: reserveYtdSortDir, onClick: handleReserveYtdSort }), /* @__PURE__ */ React.createElement(Th, { label: "Change YTD", k: "change_ytd_adj", sortKey: reserveYtdSortKey, sortDir: reserveYtdSortDir, onClick: handleReserveYtdSort }), /* @__PURE__ */ React.createElement(Th, { label: "% funded now", k: "pct_funded_current", sortKey: reserveYtdSortKey, sortDir: reserveYtdSortDir, onClick: handleReserveYtdSort }))), /* @__PURE__ */ React.createElement("tbody", null, sortedReserveYtd.map((b, i) => /* @__PURE__ */ React.createElement("tr", { key: b.block, className: "tbl-row", style: { borderTop: `1px solid ${LINE}`, background: i % 2 ? "transparent" : "rgba(0,0,0,0.015)" } }, /* @__PURE__ */ React.createElement("td", { style: { padding: "9px 14px", fontWeight: 500 } }, b.block, b.special ? /* @__PURE__ */ React.createElement("sup", { style: { color: AMBER, marginLeft: 3 } }, "\u2020") : null), /* @__PURE__ */ React.createElement("td", { className: "mono", style: { padding: "9px 14px", textAlign: "right", color: b.reserve_expenses_ytd > 0 ? RUST : SLATE } }, b.reserve_expenses_ytd > 0 ? fmtMoney(b.reserve_expenses_ytd, { compact: false }) : "\u2014"), /* @__PURE__ */ React.createElement("td", { className: "mono", style: { padding: "9px 14px", textAlign: "right" } }, fmtMoney(b.balance_jan26, { compact: false })), /* @__PURE__ */ React.createElement("td", { className: "mono", style: { padding: "9px 14px", textAlign: "right", fontWeight: 600 } }, fmtMoney(b.balance_may26_adj, { compact: false })), /* @__PURE__ */ React.createElement("td", { className: "mono", style: { padding: "9px 14px", textAlign: "right", color: b.change_ytd_adj >= 0 ? GREEN : RUST } }, b.change_ytd_adj >= 0 ? "+" : "", fmtMoney(b.change_ytd_adj, { compact: false })), /* @__PURE__ */ React.createElement("td", { className: "mono", style: { padding: "9px 14px", textAlign: "right", color: b.pct_funded_current != null ? fundColor(b.pct_funded_current) : SLATE, fontWeight: 600 } }, b.pct_funded_current != null ? b.pct_funded_current + "%" : "\u2014")))))), SPECIAL_ASSESSMENT_ADJUSTMENTS.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: SLATE, marginTop: 10, lineHeight: 1.5 } }, SPECIAL_ASSESSMENT_ADJUSTMENTS.map((a) => /* @__PURE__ */ React.createElement("div", { key: a.block }, /* @__PURE__ */ React.createElement("span", { style: { color: AMBER } }, "\u2020"), " ", a.block, ": ", fmtMoney(a.amount, { compact: false }), " reserve expenditure shown above still reflects the real outlay, but is excluded from the balance and change columns \u2014 ", a.note))))), /* @__PURE__ */ React.createElement("section", { style: { marginBottom: 48 } }, /* @__PURE__ */ React.createElement(
+    SectionHeader,
+    {
+      eyebrow: "Overview",
+      title: "Every block, at a glance",
+      desc: "Tile color reflects % funded per the 2026 reserve study. Hover a block to compare against last year's study."
+    }
+  ), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(96px, 1fr))", gap: 8, marginTop: 20 } }, [...STUDY_COMPARISON].sort((a, b) => compareBlocks(a.block, b.block)).map((b) => /* @__PURE__ */ React.createElement(
+    "div",
+    {
+      key: b.block,
+      className: "block-tile",
+      onMouseEnter: () => setHoveredBlock(b.block),
+      onMouseLeave: () => setHoveredBlock(null),
+      style: {
+        background: fundColor(b.pct_funded_2026),
+        borderRadius: 3,
+        padding: "12px 10px",
+        color: "#fff",
+        cursor: "default",
+        position: "relative"
+      }
+    },
+    /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, opacity: 0.85, marginBottom: 3 } }, b.block.replace("Block ", "")),
+    /* @__PURE__ */ React.createElement("div", { className: "mono", style: { fontSize: 17, fontWeight: 500 } }, b.pct_funded_2026, "%"),
+    hoveredBlock === b.block && /* @__PURE__ */ React.createElement("div", { style: {
+      position: "absolute",
+      top: "100%",
+      left: 0,
+      marginTop: 6,
+      background: INK,
+      color: "#fff",
+      padding: "10px 12px",
+      borderRadius: 4,
+      fontSize: 12,
+      whiteSpace: "nowrap",
+      zIndex: 10,
+      boxShadow: "0 6px 18px rgba(0,0,0,0.25)"
+    } }, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 3 } }, "2025 study: ", /* @__PURE__ */ React.createElement("span", { className: "mono" }, b.pct_funded_2025, "%"), " funded"), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 3 } }, "2026 study: ", /* @__PURE__ */ React.createElement("span", { className: "mono" }, b.pct_funded_2026, "%"), " funded"), /* @__PURE__ */ React.createElement("div", null, "Contribution: ", /* @__PURE__ */ React.createElement("span", { className: "mono" }, fmtMoney(b.contrib_2025), " \u2192 ", fmtMoney(b.contrib_2026))))
+  ))), /* @__PURE__ */ React.createElement(Legend2, null)), /* @__PURE__ */ React.createElement("section", { style: { marginBottom: 48 } }, /* @__PURE__ */ React.createElement(
+    SectionHeader,
+    {
+      eyebrow: "Detail",
+      title: "Reserve study comparison by block",
+      desc: "Sort any column. Recommended contribution and % funded both come directly from the 2025 and 2026 David Bach & Associates reserve studies."
+    }
+  ), /* @__PURE__ */ React.createElement(Collapsible, { closedLabel: "Click to view table", openLabel: "Hide table" }, /* @__PURE__ */ React.createElement("div", { style: { marginTop: 20, border: `1px solid ${LINE}`, borderRadius: 4, overflow: "hidden", background: PAPER_RAISED } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", fontSize: 13 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { background: INK, color: "#fff" } }, /* @__PURE__ */ React.createElement(Th, { label: "Block", k: "block", sortKey, sortDir, onClick: handleSort, align: "left" }), /* @__PURE__ */ React.createElement(Th, { label: "2025 contrib.", k: "contrib_2025", sortKey, sortDir, onClick: handleSort }), /* @__PURE__ */ React.createElement(Th, { label: "2026 contrib.", k: "contrib_2026", sortKey, sortDir, onClick: handleSort }), /* @__PURE__ */ React.createElement(Th, { label: "% funded '25", k: "pct_funded_2025", sortKey, sortDir, onClick: handleSort }), /* @__PURE__ */ React.createElement(Th, { label: "% funded '26", k: "pct_funded_2026", sortKey, sortDir, onClick: handleSort }), /* @__PURE__ */ React.createElement(Th, { label: "Ideal balance '26", k: "ideal_2026", sortKey, sortDir, onClick: handleSort }))), /* @__PURE__ */ React.createElement("tbody", null, sortedBlocks.map((b, i) => /* @__PURE__ */ React.createElement("tr", { key: b.block, className: "tbl-row", style: { borderTop: `1px solid ${LINE}`, background: i % 2 ? "transparent" : "rgba(0,0,0,0.015)" } }, /* @__PURE__ */ React.createElement("td", { style: { padding: "9px 14px", fontWeight: 500 } }, b.block), /* @__PURE__ */ React.createElement("td", { className: "mono", style: { padding: "9px 14px", textAlign: "right" } }, fmtMoney(b.contrib_2025, { compact: false })), /* @__PURE__ */ React.createElement("td", { className: "mono", style: { padding: "9px 14px", textAlign: "right" } }, fmtMoney(b.contrib_2026, { compact: false })), /* @__PURE__ */ React.createElement("td", { className: "mono", style: { padding: "9px 14px", textAlign: "right", color: fundColor(b.pct_funded_2025) } }, b.pct_funded_2025, "%"), /* @__PURE__ */ React.createElement("td", { className: "mono", style: { padding: "9px 14px", textAlign: "right", color: fundColor(b.pct_funded_2026), fontWeight: 600 } }, b.pct_funded_2026, "%"), /* @__PURE__ */ React.createElement("td", { className: "mono", style: { padding: "9px 14px", textAlign: "right" } }, fmtMoney(b.ideal_2026, { compact: false }))))))))), /* @__PURE__ */ React.createElement("div", { id: "trends", style: { scrollMarginTop: 60 } }), /* @__PURE__ */ React.createElement(
+    SectionGroupHeader,
+    {
+      title: "Five Year Trends",
+      desc: "Multi-year context behind the current-year numbers above."
+    }
+  ), /* @__PURE__ */ React.createElement("section", { style: { marginBottom: 48 } }, /* @__PURE__ */ React.createElement(
+    SectionHeader,
+    {
+      eyebrow: "Trend",
+      title: "Total reserve balance",
+      desc: "Solid line is actual, corrected data. 2024 figures are still awaiting full correction from Management Trust \u2014 treat that stretch as provisional. Dashed segment from June 2026 onward is projected from budgeted allocations, not observed activity. Y-axis starts at $1.75M (not zero) to make month-to-month changes visible."
+    }
+  ), /* @__PURE__ */ React.createElement("div", { style: { background: PAPER_RAISED, border: `1px solid ${LINE}`, borderRadius: 4, padding: "24px 20px 12px", marginTop: 20 } }, /* @__PURE__ */ React.createElement(ResponsiveContainer, { width: "100%", height: 280 }, /* @__PURE__ */ React.createElement(LineChart, { data: chartTrend, margin: { top: 6, right: 18, left: 0, bottom: 0 } }, /* @__PURE__ */ React.createElement(CartesianGrid, { strokeDasharray: "2 4", stroke: LINE, vertical: false }), /* @__PURE__ */ React.createElement(
+    XAxis,
+    {
+      dataKey: "month",
+      tickFormatter: monthLabel,
+      tick: { fontSize: 11, fill: SLATE },
+      interval: 2,
+      axisLine: { stroke: LINE },
+      tickLine: false
+    }
+  ), /* @__PURE__ */ React.createElement(YAxis, { domain: [175e4, "auto"], tickFormatter: (v) => fmtMoney(v), tick: { fontSize: 11, fill: SLATE }, axisLine: false, tickLine: false, width: 64 }), /* @__PURE__ */ React.createElement(
+    Tooltip,
+    {
+      formatter: (v, n, p) => [fmtMoney(v, { compact: false }), p.payload.status === "projected" ? "Projected" : "Actual"],
+      labelFormatter: monthLabel,
+      contentStyle: { fontSize: 12, borderRadius: 4, border: `1px solid ${LINE}` }
+    }
+  ), /* @__PURE__ */ React.createElement(ReferenceLine, { x: "May 26", stroke: SLATE, strokeDasharray: "3 3", label: { value: "Today", fontSize: 10, fill: SLATE, position: "insideTopRight" } }), /* @__PURE__ */ React.createElement(Line, { dataKey: (d) => d.status === "actual" ? d.total : null, stroke: BLUE, strokeWidth: 2.5, dot: false, isAnimationActive: false }), /* @__PURE__ */ React.createElement(Line, { dataKey: (d) => d.status === "projected" ? d.total : null, stroke: BLUE, strokeWidth: 2.5, strokeDasharray: "5 4", dot: false, isAnimationActive: false, connectNulls: true }))))), /* @__PURE__ */ React.createElement("section", { style: { marginBottom: 48 } }, /* @__PURE__ */ React.createElement(
+    SectionHeader,
+    {
+      eyebrow: "Trend",
+      title: "Operating expenses by category",
+      desc: "Association-wide totals across all blocks, from December year-end financials. Admin overhead isn't block-billable and doesn't appear here; Insurance and Property Tax/SWM are excluded as immaterial line items."
+    }
+  ), /* @__PURE__ */ React.createElement("div", { style: { background: PAPER_RAISED, border: `1px solid ${LINE}`, borderRadius: 4, padding: "24px 20px 12px", marginTop: 20 } }, /* @__PURE__ */ React.createElement(ResponsiveContainer, { width: "100%", height: 300 }, /* @__PURE__ */ React.createElement(BarChart, { data: opexByYear, margin: { top: 6, right: 18, left: 0, bottom: 0 } }, /* @__PURE__ */ React.createElement(CartesianGrid, { strokeDasharray: "2 4", stroke: LINE, vertical: false }), /* @__PURE__ */ React.createElement(XAxis, { dataKey: "year", tick: { fontSize: 11, fill: SLATE }, axisLine: { stroke: LINE }, tickLine: false }), /* @__PURE__ */ React.createElement(YAxis, { tickFormatter: (v) => fmtMoney(v), tick: { fontSize: 11, fill: SLATE }, axisLine: false, tickLine: false, width: 56 }), /* @__PURE__ */ React.createElement(Tooltip, { formatter: (v) => fmtMoney(v, { compact: false }), contentStyle: { fontSize: 12, borderRadius: 4, border: `1px solid ${LINE}` } }), /* @__PURE__ */ React.createElement(Legend, { wrapperStyle: { fontSize: 11 } }), categories.map((cat) => /* @__PURE__ */ React.createElement(Bar, { key: cat, dataKey: cat, stackId: "a", fill: catColors[cat] || SLATE })))))), /* @__PURE__ */ React.createElement("section", { style: { marginBottom: 48 } }, /* @__PURE__ */ React.createElement(
+    SectionHeader,
+    {
+      eyebrow: "Trend",
+      title: "Maintenance & landscape costs by block",
+      desc: "Repairs & Maintenance and Landscape spend for a single block, 2020\u20132025. Choose a block to inspect."
+    }
+  ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginTop: 18, marginBottom: 4 } }, /* @__PURE__ */ React.createElement("label", { htmlFor: "block-select", style: { fontSize: 12.5, color: SLATE } }, "Block"), /* @__PURE__ */ React.createElement(
+    "select",
+    {
+      id: "block-select",
+      value: selectedBlock,
+      onChange: (e) => setSelectedBlock(e.target.value),
+      style: {
+        fontFamily: "'IBM Plex Mono', monospace",
+        fontSize: 13,
+        padding: "6px 10px",
+        border: `1px solid ${LINE}`,
+        borderRadius: 3,
+        background: PAPER_RAISED,
+        color: INK
+      }
+    },
+    mlBlocks.map((b) => /* @__PURE__ */ React.createElement("option", { key: b, value: b }, b))
+  )), /* @__PURE__ */ React.createElement("div", { style: { background: PAPER_RAISED, border: `1px solid ${LINE}`, borderRadius: 4, padding: "24px 20px 12px", marginTop: 14 } }, /* @__PURE__ */ React.createElement(ResponsiveContainer, { width: "100%", height: 260 }, /* @__PURE__ */ React.createElement(LineChart, { data: mlTrend, margin: { top: 6, right: 18, left: 0, bottom: 0 } }, /* @__PURE__ */ React.createElement(CartesianGrid, { strokeDasharray: "2 4", stroke: LINE, vertical: false }), /* @__PURE__ */ React.createElement(XAxis, { dataKey: "year", tick: { fontSize: 11, fill: SLATE }, axisLine: { stroke: LINE }, tickLine: false }), /* @__PURE__ */ React.createElement(YAxis, { tickFormatter: (v) => fmtMoney(v), tick: { fontSize: 11, fill: SLATE }, axisLine: false, tickLine: false, width: 56 }), /* @__PURE__ */ React.createElement(Tooltip, { formatter: (v) => fmtMoney(v, { compact: false }), contentStyle: { fontSize: 12, borderRadius: 4, border: `1px solid ${LINE}` } }), /* @__PURE__ */ React.createElement(Legend, { wrapperStyle: { fontSize: 11 } }), /* @__PURE__ */ React.createElement(Line, { dataKey: "Repairs & Maintenance", stroke: BLUE, strokeWidth: 2.5, dot: { r: 3 }, isAnimationActive: false }), /* @__PURE__ */ React.createElement(Line, { dataKey: "Landscape", stroke: GREEN, strokeWidth: 2.5, dot: { r: 3 }, isAnimationActive: false }))))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 56, paddingTop: 20, borderTop: `1px solid ${LINE}`, fontSize: 11.5, color: SLATE, lineHeight: 1.6 } }, `Sources: Monthly financial reports (Management Trust), corrected Reserve Allocation Worksheets, and the 2025 & 2026 Level 2/3 reserve studies (David Bach & Associates). Reserve totals from Jan 2025 onward use each block's "Total Reserves" figure (ending balance plus interest, less shared expenses) \u2014 the true running balance carried forward month to month. Dec 2023\u2013Nov 2024 totals use Ending Balance only, since the worksheet's Total Reserves column is not a functioning running total for that period; these months therefore slightly understate true reserves by the (small) uncompounded interest amount. June\u2013Nov 2024 are frozen duplicate figures in the source workbook, not real monthly activity, and December 2024 has no data at all. Block 11-3's "ideal balance" figure in the 2026 study appears anomalous in the source and should be verified before use.`)));
+}
+function Collapsible({ defaultOpen = false, openLabel = "Hide table", closedLabel = "Click to view table", children }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => setOpen((o) => !o),
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        marginTop: 16,
+        background: "none",
+        border: "none",
+        padding: "6px 0",
+        cursor: "pointer",
+        color: BLUE,
+        fontSize: 13,
+        fontWeight: 600
+      }
+    },
+    /* @__PURE__ */ React.createElement("span", { style: { display: "inline-block", transform: open ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s" } }, "\u25B8"),
+    open ? openLabel : closedLabel
+  ), open && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4 } }, children));
+}
+function SectionGroupHeader({ title, desc }) {
+  return /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 24, marginTop: 8 } }, /* @__PURE__ */ React.createElement("h2", { className: "disp", style: { fontSize: 28, fontWeight: 600, margin: 0, color: INK } }, title), desc && /* @__PURE__ */ React.createElement("p", { style: { color: SLATE, fontSize: 13.5, marginTop: 6, maxWidth: 640 } }, desc), /* @__PURE__ */ React.createElement("div", { style: { height: 2, background: BLUE, width: 48, marginTop: 12 } }));
+}
+function AttentionCard({ title, items, renderLine, color }) {
+  return /* @__PURE__ */ React.createElement("div", { style: { background: PAPER_RAISED, border: `1px solid ${LINE}`, borderRadius: 4, padding: "16px 18px", borderLeft: `3px solid ${color}` } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: SLATE, marginBottom: 10, fontWeight: 500 } }, title), items.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: SLATE } }, "None") : items.map((it, i) => {
+    const [label, value] = renderLine(it);
+    return /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", justifyContent: "space-between", gap: 10, fontSize: 13, padding: "4px 0", borderTop: i > 0 ? `1px solid ${LINE}` : "none" } }, /* @__PURE__ */ React.createElement("span", null, label), /* @__PURE__ */ React.createElement("span", { className: "mono", style: { fontWeight: 600, color } }, value));
+  }));
+}
+function SectionHeader({ eyebrow, title, desc }) {
+  return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", color: BLUE, fontWeight: 600, marginBottom: 6 } }, eyebrow), /* @__PURE__ */ React.createElement("h2", { className: "disp", style: { fontSize: 24, fontWeight: 600, margin: 0 } }, title), /* @__PURE__ */ React.createElement("p", { style: { color: SLATE, fontSize: 13.5, marginTop: 6, maxWidth: 640, lineHeight: 1.5 } }, desc));
+}
+function Th({ label, k, sortKey, sortDir, onClick, align = "right" }) {
+  const active = sortKey === k;
+  return /* @__PURE__ */ React.createElement(
+    "th",
+    {
+      className: "sortable",
+      onClick: () => onClick(k),
+      style: { padding: "10px 14px", textAlign: align, fontWeight: 500, fontSize: 11.5, letterSpacing: "0.03em", color: active ? "#fff" : "rgba(255,255,255,0.65)" }
+    },
+    label,
+    active ? sortDir === "asc" ? " \u2191" : " \u2193" : ""
+  );
+}
+function Legend2() {
+  const items = [
+    { label: "< 40% funded", color: RUST },
+    { label: "40\u201360%", color: AMBER },
+    { label: "60\u201390%", color: "#7C9A6C" },
+    { label: "90%+ funded", color: GREEN }
+  ];
+  return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 18, marginTop: 14, flexWrap: "wrap" } }, items.map((it) => /* @__PURE__ */ React.createElement("div", { key: it.label, style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: SLATE } }, /* @__PURE__ */ React.createElement("span", { style: { width: 10, height: 10, borderRadius: 2, background: it.color, display: "inline-block" } }), it.label)));
+}
+const CORRECT_PASSWORD_HASH = "fae20d11aacdfb9623da9042dfac06a422b0dcbbc52947cd7c5a85e5eab5c9e7";
+async function sha256Hex(text) {
+  const enc = new TextEncoder().encode(text);
+  const hash = await crypto.subtle.digest("SHA-256", enc);
+  return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+function PasswordGate() {
+  const [unlocked, setUnlocked] = useState(false);
+  const [value, setValue] = useState("");
+  const [error, setError] = useState(false);
+  const tryUnlock = async () => {
+    const hash = await sha256Hex(value);
+    if (hash === CORRECT_PASSWORD_HASH) {
+      setUnlocked(true);
+    } else {
+      setError(true);
+    }
+  };
+  if (unlocked) return /* @__PURE__ */ React.createElement(Dashboard, null);
+  return /* @__PURE__ */ React.createElement("div", { style: {
+    minHeight: "100vh",
+    background: "#1C2B39",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontFamily: "-apple-system, sans-serif"
+  } }, /* @__PURE__ */ React.createElement("div", { style: { background: "#F8F7F3", padding: "40px 36px", borderRadius: 6, width: 320, boxShadow: "0 10px 40px rgba(0,0,0,0.3)" } }, /* @__PURE__ */ React.createElement("h2", { style: { margin: "0 0 6px", fontSize: 18, color: "#1C2B39" } }, "High Point HOA"), /* @__PURE__ */ React.createElement("p", { style: { margin: "0 0 20px", fontSize: 13, color: "#5B6472" } }, "Enter the password to view the Finance Committee dashboard."), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      type: "password",
+      value,
+      onChange: (e) => {
+        setValue(e.target.value);
+        setError(false);
+      },
+      onKeyDown: (e) => {
+        if (e.key === "Enter") tryUnlock();
+      },
+      placeholder: "Password",
+      autoFocus: true,
+      style: {
+        width: "100%",
+        padding: "10px 12px",
+        fontSize: 14,
+        border: "1px solid #D8D4C8",
+        borderRadius: 4,
+        marginBottom: 12,
+        boxSizing: "border-box"
+      }
+    }
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: tryUnlock,
+      style: {
+        width: "100%",
+        padding: 10,
+        fontSize: 14,
+        fontWeight: 600,
+        color: "#fff",
+        background: "#2E5C8A",
+        border: "none",
+        borderRadius: 4,
+        cursor: "pointer"
+      }
+    },
+    "View Dashboard"
+  ), error && /* @__PURE__ */ React.createElement("div", { style: { color: "#A34A3E", fontSize: 12, marginTop: 8 } }, "Incorrect password. Try again.")));
+}
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(PasswordGate));
+
+</script>
+</body>
+</html>
